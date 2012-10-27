@@ -1,0 +1,22 @@
+{
+  "name": "zkjs",
+  "version": "3.4.0",
+  "description": "Pure JS Zookeeper Client",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "readable-stream": "*",
+    "int53": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/dannycoates/zkjs.git"
+  },
+  "keywords": [
+    "zookeeper"
+  ],
+  "author": "Danny Coates",
+  "license": "BSD"
+}
