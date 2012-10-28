@@ -4,7 +4,7 @@ module.exports = function (
 	int53,
 	Response) {
 
-	function ConnectBody(length) {
+	function ConnectResponse(length) {
 		this.protocolVersion = 0
 		this.timeout = 0
 		this.sessionId = 0
@@ -12,14 +12,14 @@ module.exports = function (
 		this.readOnly = false
 		State.call(this, length)
 	}
-	inherits(ConnectBody, State)
+	inherits(ConnectResponse, State)
 
-	ConnectBody.prototype.next = function () {
+	ConnectResponse.prototype.next = function () {
 		this.parse()
 		return []
 	}
 
-	ConnectBody.prototype.parse = function () {
+	ConnectResponse.prototype.parse = function () {
 		var b = this.buffer
 		this.protocolVersion = b.readInt32BE(0)
 		this.timeout = b.readInt32BE(4)
@@ -59,7 +59,7 @@ module.exports = function (
 	}
 
 	ConnectRequest.prototype.response = function (cb) {
-		return new Response(ConnectBody, cb)
+		return new Response(ConnectResponse, cb)
 	}
 
 	return ConnectRequest

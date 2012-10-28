@@ -8,7 +8,7 @@ var NullState = require('./nullstate')()
 var ResponseHeader = require('./response-header')(inherits, State)
 var Response = require('./response')(ResponseHeader)
 var Receiver = require('./receiver')(NullState)
-var ConnectRequest = require('./connect-request')(inherits, State, int53, Response)
+var Connect = require('./protocol/connect')(inherits, State, int53, Response)
 
 var Client = require('./client')(
 	inherits,
@@ -16,6 +16,6 @@ var Client = require('./client')(
 	net,
 	ReadableStream,
 	Receiver,
-	ConnectRequest)
+	Connect)
 
 module.exports = Client
