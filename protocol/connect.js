@@ -1,34 +1,27 @@
-module.exports = function (
-	inherits,
-	State,
-	int53,
-	Response) {
+module.exports = function () {
 
-	function ConnectResponse(length) {
+	function ConnectResponse(cb) {
+		this.cb = cb
+		this.xid = 0
 		this.protocolVersion = 0
 		this.timeout = 0
 		this.sessionId = 0
 		this.password = ''
 		this.readOnly = false
-		State.call(this, length)
-	}
-	inherits(ConnectResponse, State)
-
-	ConnectResponse.prototype.next = function () {
-		this.parse()
-		return []
 	}
 
-	ConnectResponse.prototype.parse = function () {
-		var b = this.buffer
-		this.protocolVersion = b.readInt32BE(0)
-		this.timeout = b.readInt32BE(4)
-		this.sessionId = [b.readUInt32BE(8), b.readUInt32BE(12)]
-		var len = b.readInt32BE(16)
-		this.password = b.slice(20, 20 + len).toString()
-		this.readOnly = b.readInt8(b.length - 1) === 1
+	ConnectResponse.prototype.data = function (buffer) {
+		this.protocolVersion = buffer.readInt32BE(0)
+		this.timeout = buffer.readInt32BE(4)
+		this.sessionId = buffer.readDoubleBE(8)
+		var len = buffer.readInt32BE(16)
+		this.password = buffer.slice(20, 20 + len).toString()
+		this.readOnly = buffer.readInt8(buffer.length - 1) === 1
+		this.cb()
 	}
 
+	// NOTE: lastZxid and sessionId are supposed to be 64bit integers,
+	// however as long as we treat them as opaque blobs we can use doubles.
 	function ConnectRequest(
 		lastZxid,
 		timeout,
@@ -47,9 +40,9 @@ module.exports = function (
 		var pwlen = Buffer.byteLength(this.password)
 		var data = new Buffer(28 + (pwlen ? pwlen + 1 : 0))
 		data.writeInt32BE(this.protocolVersion, 0)
-		int53.writeInt64BE(this.lastZxid, data, 4)
+		data.writeDoubleBE(this.lastZxid, 4)
 		data.writeInt32BE(this.timeout, 12)
-		int53.writeInt64BE(this.sessionId, data, 16)
+		data.writeDoubleBE(this.sessionId, 16)
 		if (pwlen > 0) {
 			data.writeInt32BE(pwlen || -1, 24)
 			data.write(this.password, 28)
@@ -59,7 +52,7 @@ module.exports = function (
 	}
 
 	ConnectRequest.prototype.response = function (cb) {
-		return new Response(ConnectResponse, cb)
+		return new ConnectResponse(cb)
 	}
 
 	return ConnectRequest
