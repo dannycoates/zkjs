@@ -5,8 +5,11 @@ module.exports = function (
 	net,
 	ReadableStream,
 	Receiver,
-	ConnectRequest,
-	Exists) {
+	Connect,
+	Create,
+	Exists,
+	GetData,
+	SetData) {
 
 	function Client() {
 		var self = this
@@ -35,6 +38,11 @@ module.exports = function (
 		this.receiver.on('auth', this.onAuth)
 		this.receiver.on('watch', this.onWatch)
 
+		this.last_zxid = 0
+		this.timeout = 16000
+		this.sessionId = 0
+		this.password = '\0'
+		this.readOnly = false
 		this.xid = 1
 	}
 	inherits(Client, EventEmitter)
@@ -49,7 +57,13 @@ module.exports = function (
 
 	Client.prototype.connect = function () {
 		var self = this
-		var cr = new ConnectRequest(0, 16000, 0, '00', false)
+		var cr = new Connect(
+			this.last_zxid,
+			this.timeout,
+			this.sessionId,
+			this.password,
+			this.readOnly
+		)
 		this.send(cr)
 		this.receiver.push(cr,
 			function () {
@@ -59,19 +73,43 @@ module.exports = function (
 					'password', this.password,
 					'readOnly', this.readOnly
 				)
+				self.sessionId = this.sessionId
+				self.password = this.password
+				self.timeout = this.timeout
+				self.readOnly = this.readOnly
 				self.emit('connect')
 			}
 		)
 	}
 
-	Client.prototype.exists = function (path) {
-		var ex = new Exists(path, false, this.xid++)
+	Client.prototype.create = function (path, data, flags, cb) {
+		if(!Buffer.isBuffer(data)) {
+			data = new Buffer(data)
+		}
+		var cr = new Create(path, data, null, flags, this.xid++)
+		this.send(cr)
+		this.receiver.push(cr, cb)
+	}
+
+	Client.prototype.exists = function (path, watch, cb) {
+		var ex = new Exists(path, watch, this.xid++)
 		this.send(ex)
-		this.receiver.push(ex,
-			function(stat) {
-				logger.info('stat', stat)
-			}
-		)
+		this.receiver.push(ex, cb)
+	}
+
+	Client.prototype.get = function (path, watch, cb) {
+		var g = new GetData(path, watch, this.xid++)
+		this.send(g)
+		this.receiver.push(g, cb)
+	}
+
+	Client.prototype.set = function (path, data, version, cb) {
+		if (!Buffer.isBuffer(data)) {
+			data = new Buffer(data)
+		}
+		var s = new SetData(path, data, version, this.xid++)
+		this.send(s)
+		this.receiver.push(s, cb)
 	}
 
 	function receiverPing() {

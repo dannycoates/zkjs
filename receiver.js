@@ -91,7 +91,7 @@ module.exports = function (logger, inherits, EventEmitter, State) {
 						response.error(this.state.xid)
 					}
 					else {
-						response.data(data)
+						response.parse(this.state.errno, data)
 					}
 				}
 				this.state = new HeaderLength(Body)

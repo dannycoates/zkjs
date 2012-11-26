@@ -1,24 +1,4 @@
-module.exports = function () {
-
-	function ConnectResponse(cb) {
-		this.cb = cb
-		this.xid = 0
-		this.protocolVersion = 0
-		this.timeout = 0
-		this.sessionId = 0
-		this.password = ''
-		this.readOnly = false
-	}
-
-	ConnectResponse.prototype.data = function (buffer) {
-		this.protocolVersion = buffer.readInt32BE(0)
-		this.timeout = buffer.readInt32BE(4)
-		this.sessionId = buffer.readDoubleBE(8)
-		var len = buffer.readInt32BE(16)
-		this.password = buffer.slice(20, 20 + len).toString()
-		this.readOnly = buffer.readInt8(buffer.length - 1) === 1
-		this.cb()
-	}
+module.exports = function (logger) {
 
 	// NOTE: lastZxid and sessionId are supposed to be 64bit integers,
 	// however as long as we treat them as opaque blobs we can use doubles.
@@ -53,6 +33,26 @@ module.exports = function () {
 
 	ConnectRequest.prototype.response = function (cb) {
 		return new ConnectResponse(cb)
+	}
+
+	function ConnectResponse(cb) {
+		this.cb = cb
+		this.xid = 0
+		this.protocolVersion = 0
+		this.timeout = 0
+		this.sessionId = 0
+		this.password = ''
+		this.readOnly = false
+	}
+
+	ConnectResponse.prototype.parse = function (errno, buffer) {
+		this.protocolVersion = buffer.readInt32BE(0)
+		this.timeout = buffer.readInt32BE(4)
+		this.sessionId = buffer.readDoubleBE(8)
+		var len = buffer.readInt32BE(16)
+		this.password = buffer.slice(20, 20 + len).toString()
+		this.readOnly = buffer.readInt8(buffer.length - 1) === 1
+		this.cb()
 	}
 
 	return ConnectRequest
