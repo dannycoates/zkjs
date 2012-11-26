@@ -17,6 +17,9 @@ c.on('connect',
 					c.getChildren('/foo', false, function (err, children, stat) {
 						console.log('children', children)
 						console.log('stat', stat)
+						c.del('/foo/bar2', 0, function (err) {
+							console.log('del')
+						})
 					})
 				})
 			}

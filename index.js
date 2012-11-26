@@ -13,6 +13,7 @@ var Receiver = require('./receiver')(logger, inherits, EventEmitter, State)
 var ZnodeStat = require('./protocol/znode-stat')(int53)
 var Connect = require('./protocol/connect')(logger)
 var Create = require('./protocol/create')(logger, ACL, ZKErrors)
+var Delete = require('./protocol/delete')(logger)
 var Exists = require('./protocol/exists')(logger, ZKErrors, ZnodeStat)
 var GetChildren = require('./protocol/get-children')(logger, ZKErrors, ZnodeStat)
 var GetData = require('./protocol/get-data')(logger, ZKErrors, ZnodeStat)
@@ -27,6 +28,7 @@ var Client = require('./client')(
 	Receiver,
 	Connect,
 	Create,
+	Delete,
 	Exists,
 	GetChildren,
 	GetData,

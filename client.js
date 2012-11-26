@@ -7,6 +7,7 @@ module.exports = function (
 	Receiver,
 	Connect,
 	Create,
+	Delete,
 	Exists,
 	GetChildren,
 	GetData,
@@ -90,6 +91,12 @@ module.exports = function (
 		var cr = new Create(path, data, null, flags, this.xid++)
 		this.send(cr)
 		this.receiver.push(cr, cb)
+	}
+
+	Client.prototype.del = function (path, version, cb) {
+		var d = new Delete(path, version, this.xid++)
+		this.send(d)
+		this.receiver.push(d, cb)
 	}
 
 	Client.prototype.exists = function (path, watch, cb) {
