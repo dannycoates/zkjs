@@ -18,6 +18,7 @@ var Exists = require('./protocol/exists')(logger, ZKErrors, ZnodeStat)
 var GetChildren = require('./protocol/get-children')(logger, ZKErrors, ZnodeStat)
 var GetData = require('./protocol/get-data')(logger, ZKErrors, ZnodeStat)
 var SetData = require('./protocol/set-data')(logger, ZKErrors, ZnodeStat)
+var Sync = require('./protocol/sync')(logger)
 
 var Client = require('./client')(
 	logger,
@@ -32,7 +33,8 @@ var Client = require('./client')(
 	Exists,
 	GetChildren,
 	GetData,
-	SetData
+	SetData,
+	Sync
 )
 
 module.exports = Client

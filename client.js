@@ -11,7 +11,8 @@ module.exports = function (
 	Exists,
 	GetChildren,
 	GetData,
-	SetData) {
+	SetData,
+	Sync) {
 
 	function Client() {
 		var self = this
@@ -86,7 +87,7 @@ module.exports = function (
 
 	Client.prototype.create = function (path, data, flags, cb) {
 		if(!Buffer.isBuffer(data)) {
-			data = new Buffer(data)
+			data = new Buffer(data.toString())
 		}
 		var cr = new Create(path, data, null, flags, this.xid++)
 		this.send(cr)
@@ -119,13 +120,18 @@ module.exports = function (
 
 	Client.prototype.set = function (path, data, version, cb) {
 		if (!Buffer.isBuffer(data)) {
-			data = new Buffer(data)
+			data = new Buffer(data.toString())
 		}
 		var s = new SetData(path, data, version, this.xid++)
 		this.send(s)
 		this.receiver.push(s, cb)
 	}
 
+	Client.prototype.sync = function (path, cb) {
+		var s = new Sync(path, this.xid++)
+		this.send(s)
+		this.receiver.push(s, cb)
+	}
 	function receiverPing() {
 		logger.info('ping')
 	}
