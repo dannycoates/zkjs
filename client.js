@@ -8,6 +8,7 @@ module.exports = function (
 	Connect,
 	Create,
 	Exists,
+	GetChildren,
 	GetData,
 	SetData) {
 
@@ -101,6 +102,12 @@ module.exports = function (
 		var g = new GetData(path, watch, this.xid++)
 		this.send(g)
 		this.receiver.push(g, cb)
+	}
+
+	Client.prototype.getChildren = function (path, watch, cb) {
+		var gc = new GetChildren(path, watch, this.xid++)
+		this.send(gc)
+		this.receiver.push(gc, cb)
 	}
 
 	Client.prototype.set = function (path, data, version, cb) {

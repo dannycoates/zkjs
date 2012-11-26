@@ -14,6 +14,7 @@ var ZnodeStat = require('./protocol/znode-stat')(int53)
 var Connect = require('./protocol/connect')(logger)
 var Create = require('./protocol/create')(logger, ACL, ZKErrors)
 var Exists = require('./protocol/exists')(logger, ZKErrors, ZnodeStat)
+var GetChildren = require('./protocol/get-children')(logger, ZKErrors, ZnodeStat)
 var GetData = require('./protocol/get-data')(logger, ZKErrors, ZnodeStat)
 var SetData = require('./protocol/set-data')(logger, ZKErrors, ZnodeStat)
 
@@ -27,6 +28,7 @@ var Client = require('./client')(
 	Connect,
 	Create,
 	Exists,
+	GetChildren,
 	GetData,
 	SetData
 )

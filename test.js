@@ -14,6 +14,10 @@ c.on('connect',
 						console.log('get', data.toString())
 						console.log('stat', stat)
 					})
+					c.getChildren('/foo', false, function (err, children, stat) {
+						console.log('children', children)
+						console.log('stat', stat)
+					})
 				})
 			}
 			else {
