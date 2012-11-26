@@ -12,10 +12,16 @@ module.exports = function (crypto) {
 		this.id = id
 	}
 
+	ACL.prototype.byteLength = function () {
+		var schemelen = Buffer.byteLength(this.id.scheme)
+		var credlen = Buffer.byteLength(this.id.credential)
+		return 4 + 4 + schemelen + 4 + credlen
+	}
+
 	ACL.prototype.toBuffer = function () {
 		var schemelen = Buffer.byteLength(this.id.scheme)
 		var credlen = Buffer.byteLength(this.id.credential)
-		var data = new Buffer(4 + 4 + schemelen + 4 + credlen)
+		var data = new Buffer(this.byteLength())
 		data.writeInt32BE(this.permissions, 0)
 		data.writeInt32BE(schemelen, 4)
 		data.write(this.id.scheme, 8)
@@ -45,6 +51,15 @@ module.exports = function (crypto) {
 	ACL.digestAcl = function (name, password, permissions) {
 		permissions = permissions || ACL.Permissions.ALL
 		return new ACL(permissions, new Id('digest', credential(name, password)))
+	}
+
+	ACL.parse = function (buffer) {
+		var permissions = buffer.readInt32BE(0)
+		var schemelen = buffer.readInt32BE(4)
+		var scheme = buffer.toString('utf8', 8, schemelen + 8)
+		var credlen = buffer.readInt32BE(schemelen + 8)
+		var credential = buffer.toString('utf8', schemelen + 12, schemelen + 12 + credlen)
+		return new ACL(permissions, new Id(scheme, credential))
 	}
 
 	return ACL

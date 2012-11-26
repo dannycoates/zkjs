@@ -9,8 +9,10 @@ module.exports = function (
 	Create,
 	Delete,
 	Exists,
+	GetACL,
 	GetChildren,
 	GetData,
+	SetACL,
 	SetData,
 	Sync) {
 
@@ -112,6 +114,12 @@ module.exports = function (
 		this.receiver.push(g, cb)
 	}
 
+	Client.prototype.getACL = function (path, cb) {
+		var g = new GetACL(path, this.xid++)
+		this.send(g)
+		this.receiver.push(g, cb)
+	}
+
 	Client.prototype.getChildren = function (path, watch, cb) {
 		var gc = new GetChildren(path, watch, this.xid++)
 		this.send(gc)
@@ -123,6 +131,12 @@ module.exports = function (
 			data = new Buffer(data.toString())
 		}
 		var s = new SetData(path, data, version, this.xid++)
+		this.send(s)
+		this.receiver.push(s, cb)
+	}
+
+	Client.prototype.setACL = function (path, acls, version, cb) {
+		var s = new SetACL(path, acls, version, this.xid++)
 		this.send(s)
 		this.receiver.push(s, cb)
 	}

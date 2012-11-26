@@ -23,6 +23,9 @@ c.on('connect',
 						// c.del('/foo/bar2', 0, function (err) {
 						// 	console.log('del')
 						// })
+						c.setACL('/foo', null, stat.aversion, function (err, stat) {
+							console.log('set acl', stat)
+						})
 					})
 				})
 			}

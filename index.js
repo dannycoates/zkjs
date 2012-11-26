@@ -15,8 +15,10 @@ var Connect = require('./protocol/connect')(logger)
 var Create = require('./protocol/create')(logger, ACL, ZKErrors)
 var Delete = require('./protocol/delete')(logger)
 var Exists = require('./protocol/exists')(logger, ZKErrors, ZnodeStat)
+var GetACL = require('./protocol/get-acl')(logger, ZKErrors, ZnodeStat, ACL)
 var GetChildren = require('./protocol/get-children')(logger, ZKErrors, ZnodeStat)
 var GetData = require('./protocol/get-data')(logger, ZKErrors, ZnodeStat)
+var SetACL = require('./protocol/set-acl')(logger, ZKErrors, ZnodeStat, ACL)
 var SetData = require('./protocol/set-data')(logger, ZKErrors, ZnodeStat)
 var Sync = require('./protocol/sync')(logger)
 
@@ -31,8 +33,10 @@ var Client = require('./client')(
 	Create,
 	Delete,
 	Exists,
+	GetACL,
 	GetChildren,
 	GetData,
+	SetACL,
 	SetData,
 	Sync
 )
