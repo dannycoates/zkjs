@@ -5,6 +5,7 @@ module.exports = function (
 	net,
 	ReadableStream,
 	Receiver,
+	Close,
 	Connect,
 	Create,
 	Delete,
@@ -12,6 +13,7 @@ module.exports = function (
 	GetACL,
 	GetChildren,
 	GetData,
+	Ping,
 	SetACL,
 	SetData,
 	Sync) {
@@ -49,6 +51,11 @@ module.exports = function (
 		this.password = '\0'
 		this.readOnly = false
 		this.xid = 1
+		this.pingInterval = setInterval( // TODO: for real
+			function () {
+				this.ping()
+			}.bind(this),
+			10000)
 	}
 	inherits(Client, EventEmitter)
 
@@ -146,6 +153,16 @@ module.exports = function (
 		this.send(s)
 		this.receiver.push(s, cb)
 	}
+
+	Client.prototype.ping = function () {
+		this.send(Ping.instance)
+	}
+
+	Client.prototype.close = function () {
+		this.send(Close.instance)
+		this.receiver.push(Close.instance)
+	}
+
 	function receiverPing() {
 		logger.info('ping')
 	}

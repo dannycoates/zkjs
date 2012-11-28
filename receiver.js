@@ -66,6 +66,7 @@ module.exports = function (logger, inherits, EventEmitter, State) {
 			if (next === State.done) {
 				var data = null
 				this.done = true
+				logger.info('xid', this.state.xid)
 				if (this.state.xid === CONNECT) {
 					data = this.state.buffer
 				}
@@ -105,7 +106,10 @@ module.exports = function (logger, inherits, EventEmitter, State) {
 	Receiver.prototype.push = function (request, cb) {
 		if (this.closed) { return false } // or something
 		logger.info('receiver', 'push')
-		this.queue.push(request.response(cb))
+		var response = request.response(cb)
+		if (response) {
+			this.queue.push(response)
+		}
 		return true
 	}
 
