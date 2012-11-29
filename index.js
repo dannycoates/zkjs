@@ -1,5 +1,4 @@
 var logger = console
-
 var crypto = require('crypto')
 var inherits = require('util').inherits
 var EventEmitter = require('events').EventEmitter
@@ -12,7 +11,7 @@ var ACL = require('./acl')(crypto)
 var Receiver = require('./receiver')(logger, inherits, EventEmitter, State)
 var ZnodeStat = require('./protocol/znode-stat')(int53)
 var Close = require('./protocol/close')()
-var Connect = require('./protocol/connect')(logger)
+var Connect = require('./protocol/connect')(logger, ZKErrors)
 var Create = require('./protocol/create')(logger, ACL, ZKErrors)
 var Delete = require('./protocol/delete')(logger)
 var Exists = require('./protocol/exists')(logger, ZKErrors, ZnodeStat)
@@ -30,7 +29,14 @@ var Client = require('./client')(
 	EventEmitter,
 	net,
 	ReadableStream,
-	Receiver,
+	Receiver
+)
+
+var Session = require('./session')(
+	logger,
+	inherits,
+	EventEmitter,
+	Client,
 	Close,
 	Connect,
 	Create,
@@ -42,7 +48,6 @@ var Client = require('./client')(
 	Ping,
 	SetACL,
 	SetData,
-	Sync
-)
+	Sync)
 
-module.exports = Client
+module.exports = Session

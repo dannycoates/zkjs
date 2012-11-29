@@ -2,7 +2,8 @@ var Client = require('./index')
 
 var c = new Client()
 
-c.on('connect',
+c.connect('localhost', 2181)
+c.once('connect',
 	function () {
 		console.log('connected')
 		c.exists('/foo', false, function (err, exists, stat) {
@@ -23,9 +24,9 @@ c.on('connect',
 						// c.del('/foo/bar2', 0, function (err) {
 						// 	console.log('del')
 						// })
-						c.setACL('/foo', null, stat.aversion, function (err, stat) {
-							console.log('set acl', stat)
-						})
+						// c.setACL('/foo', null, stat.aversion, function (err, stat) {
+						// 	console.log('set acl', stat)
+						// })
 					})
 				})
 			}
