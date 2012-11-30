@@ -1,4 +1,4 @@
-module.exports = function (int53) {
+module.exports = function (format, int53) {
 	function ZnodeStat() {
 		this.czxid = 0
 		this.mzxid = 0
@@ -27,6 +27,19 @@ module.exports = function (int53) {
 		zs.numChildren = buffer.readInt32BE(56)
 		zs.pzxid = buffer.readDoubleBE(60)
 		return zs
+	}
+
+	ZnodeStat.prototype.toString = function () {
+		return format(
+			'(created: %s modified: %s version: %d cversion: %d aversion: %d length: %d children: %d)',
+			this.ctime,
+			this.mtime,
+			this.version,
+			this.cversion,
+			this.aversion,
+			this.dataLength,
+			this.numChildren
+		)
 	}
 
 	return ZnodeStat

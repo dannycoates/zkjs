@@ -58,33 +58,33 @@ module.exports = function (
 		if(!Buffer.isBuffer(data)) {
 			data = new Buffer(data.toString())
 		}
-		var cr = new Create(path, data, null, flags, this.xid++)
-		this.client.send(cr, cb)
+		var cr = new Create(path, data, null, flags, this.xid++) //TODO: ACL
+		this.client.send(cr, cb || defaultCreate)
 	}
 
 	Session.prototype.del = function (path, version, cb) {
 		var d = new Delete(path, version, this.xid++)
-		this.client.send(d, cb)
+		this.client.send(d, cb || defaultDel)
 	}
 
 	Session.prototype.exists = function (path, watch, cb) {
 		var ex = new Exists(path, watch, this.xid++)
-		this.client.send(ex, cb)
+		this.client.send(ex, cb || defaultExists)
 	}
 
 	Session.prototype.get = function (path, watch, cb) {
 		var g = new GetData(path, watch, this.xid++)
-		this.client.send(g, cb)
+		this.client.send(g, cb || defaultGet)
 	}
 
 	Session.prototype.getACL = function (path, cb) {
 		var g = new GetACL(path, this.xid++)
-		this.client.send(g, cb)
+		this.client.send(g, cb || defaultGetACL)
 	}
 
 	Session.prototype.getChildren = function (path, watch, cb) {
 		var gc = new GetChildren(path, watch, this.xid++)
-		this.client.send(gc, cb)
+		this.client.send(gc, cb || defaultGetChildren)
 	}
 
 	Session.prototype.login = function (
@@ -107,7 +107,7 @@ module.exports = function (
 			data = new Buffer(data.toString())
 		}
 		var s = new SetData(path, data, version, this.xid++)
-		this.client.send(s, cb)
+		this.client.send(s, cb || defaultSet)
 	}
 
 	Session.prototype.setACL = function (path, acls, version, cb) {
@@ -124,6 +124,8 @@ module.exports = function (
 		this.pingTimer = setTimeout(this.pinger, this.timeout / 2)
 		this.ping()
 	}
+
+	// Event handlers
 
 	function clientConnect() {
 		this.login(
@@ -152,7 +154,7 @@ module.exports = function (
 	}
 
 	function clientDrain() {
-		logger.info('client', 'drain')
+		//logger.info('client', 'drain')
 	}
 
 	function clientError(err) {
@@ -168,6 +170,78 @@ module.exports = function (
 		this.client.removeListener('close', this.onClientClose)
 		clearTimeout(this.pingTimer)
 		this.client = null
+	}
+
+	// Default callbacks
+
+	function defaultCreate(err, path) {
+		if (err) {
+			return logger.error(err.message)
+		}
+		logger.info('created', path)
+	}
+
+	function defaultDel(err) {
+		if (err) {
+			return logger.error(err.message)
+		}
+		logger.info('deleted')
+	}
+
+	function defaultGet(err, data, stat) {
+		if (err) {
+			return logger.error(err.message)
+		}
+		logger.info(
+			'length: %d data: %s stat: %s',
+			data.length,
+			data.toString('utf8', 0, Math.min(data.length, 256)),
+			stat
+		)
+	}
+
+	function defaultGetACL(err, acls, stat) {
+		if (err) {
+			return logger.error(err.message)
+		}
+		logger.info(
+			'acls: [%s] stat: %s',
+			acls.join(','),
+			stat
+		)
+	}
+
+	function defaultGetChildren(err, children, stat) {
+		if (err) {
+			return logger.error(err.message)
+		}
+		logger.info(
+			'children: [%s] stat: %s',
+			children.join(','),
+			stat
+		)
+	}
+
+	function defaultSet(err, stat) {
+		if (err) {
+			return logger.error(err.message)
+		}
+		logger.info(
+			'set stat: %s',
+			stat
+		)
+	}
+
+	function defaultExists(err, exists, stat) {
+		if (err) {
+			return logger.error(err.message)
+		}
+		if (!exists) {
+			logger.info('does not exist')
+		}
+		else {
+			logger.info(stat)
+		}
 	}
 
 	return Session

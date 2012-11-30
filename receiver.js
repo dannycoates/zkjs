@@ -66,7 +66,7 @@ module.exports = function (logger, inherits, EventEmitter, State) {
 			if (next === State.done) {
 				var data = null
 				this.done = true
-				logger.info('xid', this.state.xid)
+				//logger.info('xid', this.state.xid)
 				if (this.state.xid === CONNECT) {
 					data = this.state.buffer
 				}

@@ -1,8 +1,16 @@
-module.exports = function (crypto) {
+module.exports = function (format, crypto) {
 
 	function Id(scheme, credential) {
 		this.scheme = scheme
 		this.credential = credential
+	}
+
+	Id.prototype.toString = function () {
+		return format(
+			'(scheme: %s credential: %s)',
+			this.scheme,
+			this.credential
+		)
 	}
 
 	Id.ANYONE = new Id('world', 'anyone')
@@ -28,6 +36,21 @@ module.exports = function (crypto) {
 		data.writeInt32BE(credlen, 8 + schemelen)
 		data.write(this.id.credential, 12 + schemelen)
 		return data
+	}
+
+	ACL.prototype.toString = function () {
+		var permissions = []
+		if ((this.permissions & 1) > 0) permissions.push('read')
+		if ((this.permissions & 2) > 0) permissions.push('write')
+		if ((this.permissions & 4) > 0) permissions.push('create')
+		if ((this.permissions & 8) > 0) permissions.push('delete')
+		if ((this.permissions & 16) > 0) permissions.push('admin')
+		if ((this.permissions & 31) > 0) permissions.push('all')
+		return format(
+			'(id: %s permissions: [%s])',
+			this.id,
+			permissions.join(',')
+		)
 	}
 
 	ACL.Permissions = {

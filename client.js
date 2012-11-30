@@ -38,7 +38,7 @@ module.exports = function (
 	}
 
 	function receiverPing() {
-		logger.info('ping')
+		//logger.info('ping')
 	}
 
 	function receiverZxid(zxid) {

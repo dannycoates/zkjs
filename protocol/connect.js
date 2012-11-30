@@ -12,7 +12,7 @@ module.exports = function (logger, ZKErrors) {
 		this.lastZxid = lastZxid
 		this.timeout = timeout
 		this.sessionId = sessionId
-		this.password = password || '\0'
+		this.password = password || 'AA==' //base64 of '\0'
 		this.readOnly = readOnly
 	}
 
@@ -25,7 +25,7 @@ module.exports = function (logger, ZKErrors) {
 		data.writeDoubleBE(this.sessionId, 16)
 		if (pwlen > 0) {
 			data.writeInt32BE(pwlen || -1, 24)
-			data.write(this.password, 28)
+			data.write(this.password, 28, pwlen, 'base64')
 		}
 		data.writeInt8(this.readOnly ? 1 : 0, data.length - 1)
 		return data
@@ -55,7 +55,7 @@ module.exports = function (logger, ZKErrors) {
 		this.timeout = buffer.readInt32BE(4)
 		this.sessionId = buffer.readDoubleBE(8)
 		var len = buffer.readInt32BE(16)
-		this.password = buffer.slice(20, 20 + len).toString()
+		this.password = buffer.slice(20, 20 + len).toString('base64')
 		this.readOnly = buffer.readInt8(buffer.length - 1) === 1
 		this.cb(err, this.timeout, this.sessionId, this.password, this.readOnly)
 	}
