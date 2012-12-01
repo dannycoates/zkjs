@@ -14,12 +14,10 @@ module.exports = function (
 
 		this.onPing = receiverPing.bind(this)
 		this.onZxid = receiverZxid.bind(this)
-		this.onAuth = receiverAuth.bind(this)
 		this.onWatch = receiverWatch.bind(this)
 
 		this.receiver.on('ping', this.onPing)
 		this.receiver.on('zxid', this.onZxid)
-		this.receiver.on('auth', this.onAuth)
 		this.receiver.on('watch', this.onWatch)
 
 		net.Socket.call(this)
@@ -44,10 +42,6 @@ module.exports = function (
 	function receiverZxid(zxid) {
 		logger.info('zxid', zxid)
 		this.emit('zxid', zxid)
-	}
-
-	function receiverAuth() {
-		logger.info('auth')
 	}
 
 	function receiverWatch(watch) {

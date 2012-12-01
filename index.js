@@ -11,6 +11,7 @@ var State = require('./state')(inherits)
 var ZKErrors = require('./protocol/zk-errors')()
 var ACL = require('./acl')(format, crypto)
 var ZnodeStat = require('./protocol/znode-stat')(format, int53)
+var Auth = require('./protocol/auth')(ZKErrors)
 var Close = require('./protocol/close')()
 var Connect = require('./protocol/connect')(logger, ZKErrors)
 var Create = require('./protocol/create')(logger, ACL, ZKErrors)
@@ -41,6 +42,7 @@ var Session = require('./session')(
 	inherits,
 	EventEmitter,
 	Client,
+	Auth,
 	Close,
 	Connect,
 	Create,

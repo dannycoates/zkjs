@@ -5,6 +5,13 @@ module.exports = function (format, crypto) {
 		this.credential = credential
 	}
 
+	Id.create = function (name, password) {
+		var namePassword = name + ':' + password
+		var hash = crypto.createHash('sha1')
+		hash.update(namePassword)
+		return new Id('digest', namePassword + ':' + hash.digest('base64'))
+	}
+
 	Id.prototype.toString = function () {
 		return format(
 			'Id(scheme: %s credential: %s)',
@@ -67,16 +74,9 @@ module.exports = function (format, crypto) {
 
 	ACL.OPEN = [new ACL(ACL.Permissions.ALL, Id.ANYONE)]
 
-	function credential(name, password) {
-		var namePassword = name + ':' + password
-		var hash = crypto.createHash('sha1')
-		hash.update(namePassword)
-		return namePassword + ':' + hash.digest('base64')
-	}
-
 	ACL.digestAcl = function (name, password, permissions) {
 		permissions = permissions || ACL.Permissions.ALL
-		return new ACL(permissions, new Id('digest', credential(name, password)))
+		return new ACL(permissions, Id.create(name, password))
 	}
 
 	ACL.parse = function (buffer) {

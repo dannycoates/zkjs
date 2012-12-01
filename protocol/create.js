@@ -9,8 +9,12 @@ module.exports = function (logger, ACL, ZKErrors) {
 		this.flags = flags
 	}
 
-	Create.Ephemeral = 1
-	Create.Sequence = 2
+	Create.flags = {
+		NONE: 0,
+		EPHEMERAL: 1,
+		SEQUENCE: 2,
+		EPHEMERAL_SEQUENCE: 3
+	}
 
 	Create.prototype.toBuffer = function () {
 		var pathlen = Buffer.byteLength(this.path)

@@ -3,6 +3,7 @@ module.exports = function (
 	inherits,
 	EventEmitter,
 	Client,
+	Auth,
 	Close,
 	Connect,
 	Create,
@@ -16,29 +17,39 @@ module.exports = function (
 	SetData,
 	Sync) {
 
-	function noop() {}
+	function Session(options) {
+		options = options || {}
+		options.timeout = options.timeout || 10000
+		options.readOnly = options.readOnly || false
 
-	function Session() {
+		this.options = options
 		this.client = null
 		this.lastZxid = 0
-		this.timeout = 10000
+		this.timeout = options.timeout
 		this.id = 0
 		this.password = null
-		this.readOnly = false
+		this.readOnly = options.readOnly
 		this.xid = 1
 		this.pingTimer = null
-		this.pinger = pingLoop.bind(this)
+		this.startPinger = pingLoop.bind(this)
+		this.credentials = options.credentials || []
 
-		this.onClientEnd = clientEnd.bind(this)
 		this.onClientConnect = clientConnect.bind(this)
+		this.onClientEnd = clientEnd.bind(this)
 		this.onClientDrain = clientDrain.bind(this)
 		this.onClientError = clientError.bind(this)
 		this.onClientClose = clientClose.bind(this)
 
-		this.onLogin = afterLogin.bind(this)
+		this.onLogin = onLogin.bind(this)
+		this.onLoginComplete = onLoginComplete.bind(this)
+		this.onClose = onClose.bind(this)
 		EventEmitter.call(this)
 	}
 	inherits(Session, EventEmitter)
+
+	Session.createFlags = Create.flags
+
+	//API
 
 	Session.prototype.connect = function (host, port) {
 		this.client = new Client()
@@ -50,108 +61,234 @@ module.exports = function (
 		this.client.connect(port, host)
 	}
 
-	Session.prototype.close = function () {
-		this.client.send(Close.instance, noop)
+	Session.prototype.auth = function (id, cb) {
+		this.client.send(new Auth(0, id), cb)
 	}
 
-	Session.prototype.create = function (path, data, flags, cb) {
+	Session.prototype.close = function () {
+		this.client.send(Close.instance, this.onClose)
+	}
+
+	Session.prototype.create = function (path, data, flags, acls, cb) {
 		if(!Buffer.isBuffer(data)) {
 			data = new Buffer(data.toString())
 		}
-		var cr = new Create(path, data, null, flags, this.xid++) //TODO: ACL
-		this.client.send(cr, cb || defaultCreate)
+		//optional parameter shenanigans
+		if (cb === undefined) {
+			if (acls === undefined) {
+				if (flags === undefined) {
+					cb = defaultCreate
+					flags = Create.flags.NONE
+					acls = null
+				}
+				else if (Array.isArray(flags)) {
+					cb = defaultCreate
+					acls = flags
+					flags = Create.flags.NONE
+				}
+				else if (typeof(flags) === 'function') {
+					cb = flags
+					flags = Create.flags.NONE
+					acls = null
+				}
+				else {
+					cb = defaultCreate
+					acls = null
+				}
+			}
+			else if (Array.isArray(flags)) {
+				acls = flags
+				cb = acls
+				flags = Create.flags.NONE
+			}
+			else if (Array.isArray(acls)) {
+				cb = defaultCreate
+			}
+			else {
+				cb = acls
+				acls = null
+			}
+		}
+		this.client.send(new Create(path, data, acls, flags, this.xid++), cb)
 	}
 
 	Session.prototype.del = function (path, version, cb) {
-		var d = new Delete(path, version, this.xid++)
-		this.client.send(d, cb || defaultDel)
+		this.client.send(new Delete(path, version, this.xid++), cb || defaultDel)
 	}
 
 	Session.prototype.exists = function (path, watch, cb) {
-		var ex = new Exists(path, watch, this.xid++)
-		this.client.send(ex, cb || defaultExists)
+		if (cb === undefined) {
+			if (watch === undefined) {
+				cb = defaultExists
+				watch = false
+			}
+			else if (typeof(watch) === 'function') {
+				cb = watch
+				watch = false
+			}
+			else {
+				cb = defaultExists
+			}
+		}
+		this.client.send(new Exists(path, watch, this.xid++), cb)
 	}
 
 	Session.prototype.get = function (path, watch, cb) {
-		var g = new GetData(path, watch, this.xid++)
-		this.client.send(g, cb || defaultGet)
+		if (cb === undefined) {
+			if (watch === undefined) {
+				cb = defaultGet
+				watch = false
+			}
+			else if (typeof(watch) === 'function') {
+				cb = watch
+				watch = false
+			}
+			else {
+				cb = defaultGet
+			}
+		}
+		this.client.send(new GetData(path, watch, this.xid++), cb)
 	}
 
 	Session.prototype.getACL = function (path, cb) {
-		var g = new GetACL(path, this.xid++)
-		this.client.send(g, cb || defaultGetACL)
+		this.client.send(new GetACL(path, this.xid++), cb || defaultGetACL)
 	}
 
 	Session.prototype.getChildren = function (path, watch, cb) {
-		var gc = new GetChildren(path, watch, this.xid++)
-		this.client.send(gc, cb || defaultGetChildren)
-	}
-
-	Session.prototype.login = function (
-		lastZxid,
-		timeout,
-		sessionId,
-		password,
-		readOnly,
-		cb) {
-		var cr = new Connect(lastZxid, timeout, sessionId, password, readOnly)
-		this.client.send(cr, cb)
-	}
-
-	Session.prototype.ping = function () {
-		this.client.send(Ping.instance)
+		if (cb === undefined) {
+			if (watch === undefined) {
+				cb = defaultGetChildren
+				watch = false
+			}
+			else if (typeof(watch) === 'function') {
+				cb = watch
+				watch = false
+			}
+			else {
+				cb = defaultGetChildren
+			}
+		}
+		this.client.send(new GetChildren(path, watch, this.xid++), cb)
 	}
 
 	Session.prototype.set = function (path, data, version, cb) {
 		if (!Buffer.isBuffer(data)) {
 			data = new Buffer(data.toString())
 		}
-		var s = new SetData(path, data, version, this.xid++)
-		this.client.send(s, cb || defaultSet)
+		this.client.send(
+			new SetData(path, data, version, this.xid++),
+			cb || defaultSet
+		)
 	}
 
 	Session.prototype.setACL = function (path, acls, version, cb) {
-		var s = new SetACL(path, acls, version, this.xid++)
-		this.client.send(s, cb)
+		this.client.send(new SetACL(path, acls, version, this.xid++), cb)
 	}
 
 	Session.prototype.sync = function (path, cb) {
-		var s = new Sync(path, this.xid++)
-		this.client.send(s, cb)
+		this.client.send(new Sync(path, this.xid++), cb)
+	}
+
+	// internal API
+
+	Session.prototype._login = function (
+		lastZxid,
+		timeout,
+		sessionId,
+		password,
+		readOnly,
+		cb) {
+		this.client.send(
+			new Connect(lastZxid, timeout, sessionId, password, readOnly),
+			cb
+		)
+	}
+
+	Session.prototype._ping = function () {
+		this.client.send(Ping.instance)
+	}
+
+	Session.prototype._reset = function () {
+		this.timeout = this.options.timeout
+		this.id = 0
+		this.password = null
+		this.readOnly = this.options.readOnly
+	}
+
+
+	Session.prototype._sendCredentials = function (cb) {
+		this._chain(
+			this.credentials.map(
+				function (id) {
+					return new Auth(0, id)
+				}
+			),
+			cb
+		)
+	}
+
+	Session.prototype._chain = function (requests, cb) {
+		var request = requests.pop()
+		if (request) {
+			this.send(
+				request,
+				function onResponse(err) {
+					if (err) {
+						return cb(err)
+					}
+					this._chain(requests, cb);
+				}.bind(this)
+			)
+		}
+		else {
+			cb()
+		}
 	}
 
 	function pingLoop() {
-		this.pingTimer = setTimeout(this.pinger, this.timeout / 2)
-		this.ping()
+		this.pingTimer = setTimeout(this.startPinger, this.timeout / 2)
+		this._ping()
 	}
 
 	// Event handlers
 
 	function clientConnect() {
-		this.login(
+		this._login(
 			this.lastZxid,
 			this.timeout,
 			this.id,
 			this.password,
 			this.readOnly,
-			this.onLogin)
+			this.onLogin
+		)
 	}
 
-	function afterLogin(err, timeout, id, password, readOnly) {
+	function onLogin(err, timeout, id, password, readOnly) {
 		if (err) {
-			//TODO
+			this._reset()
+			return this.emit('expired')
 		}
 		this.timeout = timeout
 		this.id = id
 		this.password = password
 		this.readOnly = readOnly
-		if (false) { //TODO: something about auth
-
+		if (this.credentials.length > 0) {
+			this._sendCredentials(this.onLoginComplete)
 		}
 		else {
-			this.pinger()
-			this.emit('connect')
+			this.onLoginComplete()
 		}
+	}
+
+	function onLoginComplete(err) {
+		if (!err) {
+			this.startPinger()
+		}
+		this.emit('connect', err)
+	}
+
+	function onClose() {
+		this._reset()
 	}
 
 	function clientEnd() {
