@@ -26,7 +26,9 @@ module.exports = function (logger) {
 	}
 
 	SyncResponse.prototype.parse = function (errno, buffer) {
-		logger.info('sync response', errno)
+		if (errno) {
+			return this.cb(ZKErrors.toError(errno))
+		}
 		var len = buffer.readInt32BE(0)
 		var path = buffer.toString('utf8', 4, len + 4)
 		this.cb(null, path)

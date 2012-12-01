@@ -28,7 +28,9 @@ module.exports = function (logger) {
 	}
 
 	DeleteResponse.prototype.parse = function (errno, buffer) {
-		logger.info('delete response', errno)
+		if (errno) {
+			return this.cb(ZKErrors.toError(errno))
+		}
 		this.cb(null)
 	}
 

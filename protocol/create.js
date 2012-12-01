@@ -48,7 +48,9 @@ module.exports = function (logger, ACL, ZKErrors) {
 	}
 
 	CreateResponse.prototype.parse = function (errno, buffer) {
-		logger.info('create response', errno)
+		if (errno) {
+			return this.cb(ZKErrors.toError(errno))
+		}
 		var len = buffer.readInt32BE(0)
 		this.path = buffer.toString('utf8', 4, 4 + len)
 		return this.cb(null, this.path)

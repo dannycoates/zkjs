@@ -32,7 +32,9 @@ module.exports = function (logger, ZKErrors, ZnodeStat) {
 	}
 
 	SetDataResponse.prototype.parse = function (errno, buffer) {
-		logger.info('set response', errno)
+		if (errno) {
+			return this.cb(ZKErrors.toError(errno))
+		}
 		this.znodeStat = ZnodeStat.parse(buffer)
 		this.cb(null, this.znodeStat)
 	}

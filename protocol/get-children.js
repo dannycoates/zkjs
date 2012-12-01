@@ -28,7 +28,9 @@ module.exports = function (logger, ZKErrors, ZnodeStat) {
 	}
 
 	GetChildrenResponse.prototype.parse = function (errno, buffer) {
-		logger.info('get children response', errno)
+		if (errno) {
+			return this.cb(ZKErrors.toError(errno))
+		}
 		var count = buffer.readInt32BE(0)
 		if (count === -1) {
 			return this.cb(null, [])

@@ -30,7 +30,9 @@ module.exports = function (logger, ZKErrors, ZnodeStat) {
 	}
 
 	GetDataResponse.prototype.parse = function (errno, buffer) {
-		logger.info('get response', errno)
+		if (errno) {
+			return this.cb(ZKErrors.toError(errno))
+		}
 		var len = buffer.readInt32BE(0)
 		this.data = buffer.slice(4, len + 4)
 		this.znodeStat = ZnodeStat.parse(buffer.slice(len + 4))

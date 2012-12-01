@@ -26,6 +26,9 @@ module.exports = function (logger, ZKErrors, ZnodeStat, ACL) {
 	}
 
 	GetACLResponse.prototype.parse = function (errno, buffer) {
+		if (errno) {
+			return this.cb(ZKErrors.toError(errno))
+		}
 		var count = buffer.readInt32BE(0)
 		if (count === -1) {
 			return this.cb(null, [])

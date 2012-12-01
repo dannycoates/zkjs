@@ -41,7 +41,9 @@ module.exports = function (logger, ZKErrors, ZnodeStat, ACL) {
 	}
 
 	SetACLResponse.prototype.parse = function (errno, buffer) {
-		logger.info('set acl response', errno)
+		if (errno) {
+			return this.cb(ZKErrors.toError(errno))
+		}
 		var stat = ZnodeStat.parse(buffer)
 		this.cb(null, stat)
 	}
