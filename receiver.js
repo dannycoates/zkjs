@@ -1,4 +1,4 @@
-module.exports = function (logger, inherits, EventEmitter, State) {
+module.exports = function (logger, inherits, EventEmitter, State, Watch) {
 
 	var CONNECT = 0
 	var WATCH = -1
@@ -74,11 +74,8 @@ module.exports = function (logger, inherits, EventEmitter, State) {
 					if (this.state.xid === PING) {
 						this.emit('ping')
 					}
-					else if (this.state.xid === AUTH) {
-						this.emit('auth')
-					}
 					else if (this.state.xid === WATCH) {
-						this.emit('watch')
+						this.emit('watch', Watch.parse(this.state.data))
 					}
 					else {
 						data = this.state.data

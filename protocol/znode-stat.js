@@ -31,7 +31,7 @@ module.exports = function (format, int53) {
 
 	ZnodeStat.prototype.toString = function () {
 		return format(
-			'(created: %s modified: %s version: %d cversion: %d aversion: %d length: %d children: %d)',
+			'Stat(created: %s modified: %s version: %d cversion: %d aversion: %d length: %d children: %d)',
 			this.ctime,
 			this.mtime,
 			this.version,

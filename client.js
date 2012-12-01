@@ -50,8 +50,8 @@ module.exports = function (
 		logger.info('auth')
 	}
 
-	function receiverWatch() {
-		logger.info('watch')
+	function receiverWatch(watch) {
+		logger.info('watch %s', watch)
 	}
 
 	return Client

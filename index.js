@@ -6,10 +6,10 @@ var EventEmitter = require('events').EventEmitter
 var net = require('net')
 var ReadableStream = require('readable-stream')
 var int53 = require('int53')
+
 var State = require('./state')(inherits)
 var ZKErrors = require('./protocol/zk-errors')()
 var ACL = require('./acl')(format, crypto)
-var Receiver = require('./receiver')(logger, inherits, EventEmitter, State)
 var ZnodeStat = require('./protocol/znode-stat')(format, int53)
 var Close = require('./protocol/close')()
 var Connect = require('./protocol/connect')(logger, ZKErrors)
@@ -23,6 +23,9 @@ var Ping = require('./protocol/ping')()
 var SetACL = require('./protocol/set-acl')(logger, ZKErrors, ZnodeStat, ACL)
 var SetData = require('./protocol/set-data')(logger, ZKErrors, ZnodeStat)
 var Sync = require('./protocol/sync')(logger)
+var Watch = require('./protocol/watch')(format)
+
+var Receiver = require('./receiver')(logger, inherits, EventEmitter, State, Watch)
 
 var Client = require('./client')(
 	logger,

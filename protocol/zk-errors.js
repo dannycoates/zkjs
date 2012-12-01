@@ -36,6 +36,9 @@ module.exports = function () {
 	)
 
 	ZKErrors.toError = function (errno) {
+		if (errno === 0) {
+			return null
+		}
 		return new Error(errorNumbers[errno])
 	}
 

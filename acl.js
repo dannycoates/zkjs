@@ -7,10 +7,21 @@ module.exports = function (format, crypto) {
 
 	Id.prototype.toString = function () {
 		return format(
-			'(scheme: %s credential: %s)',
+			'Id(scheme: %s credential: %s)',
 			this.scheme,
 			this.credential
 		)
+	}
+
+	Id.prototype.toBuffer = function () {
+		var schemelen = Buffer.byteLength(this.scheme)
+		var credlen = Buffer.byteLength(this.credential)
+		var data = new Buffer(4 + schemelen + 4 + credlen)
+		data.writeInt32BE(schemelen, 0)
+		data.write(this.scheme, 4)
+		data.writeInt32BE(credlen, 4 + schemelen)
+		data.write(this.credential, 8 + schemelen)
+		return data
 	}
 
 	Id.ANYONE = new Id('world', 'anyone')
@@ -20,21 +31,11 @@ module.exports = function (format, crypto) {
 		this.id = id
 	}
 
-	ACL.prototype.byteLength = function () {
-		var schemelen = Buffer.byteLength(this.id.scheme)
-		var credlen = Buffer.byteLength(this.id.credential)
-		return 4 + 4 + schemelen + 4 + credlen
-	}
-
 	ACL.prototype.toBuffer = function () {
-		var schemelen = Buffer.byteLength(this.id.scheme)
-		var credlen = Buffer.byteLength(this.id.credential)
-		var data = new Buffer(this.byteLength())
+		var idData = this.id.toBuffer()
+		var data = new Buffer(4 + idData.length)
 		data.writeInt32BE(this.permissions, 0)
-		data.writeInt32BE(schemelen, 4)
-		data.write(this.id.scheme, 8)
-		data.writeInt32BE(credlen, 8 + schemelen)
-		data.write(this.id.credential, 12 + schemelen)
+		idData.copy(data, 4)
 		return data
 	}
 
@@ -47,11 +48,13 @@ module.exports = function (format, crypto) {
 		if ((this.permissions & 16) > 0) permissions.push('admin')
 		if ((this.permissions & 31) > 0) permissions.push('all')
 		return format(
-			'(id: %s permissions: [%s])',
+			'ACL(id: %s permissions: [%s])',
 			this.id,
 			permissions.join(',')
 		)
 	}
+
+	ACL.Id = Id
 
 	ACL.Permissions = {
 		READ: 1,

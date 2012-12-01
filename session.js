@@ -145,8 +145,13 @@ module.exports = function (
 		this.id = id
 		this.password = password
 		this.readOnly = readOnly
-		this.pinger()
-		this.emit('connect')
+		if (false) { //TODO: something about auth
+
+		}
+		else {
+			this.pinger()
+			this.emit('connect')
+		}
 	}
 
 	function clientEnd() {

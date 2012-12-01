@@ -46,17 +46,19 @@ module.exports = function (logger, ZKErrors) {
 	}
 
 	ConnectResponse.prototype.parse = function (errno, buffer) {
+		// Note: errno is meaningless in this case because Connect requests don't
+		// have a header like normal requests.
 		var err = null
-		if (errno) {
-			//TODO
-			logger.info('connect', errno)
-		}
 		this.protocolVersion = buffer.readInt32BE(0)
 		this.timeout = buffer.readInt32BE(4)
 		this.sessionId = buffer.readDoubleBE(8)
 		var len = buffer.readInt32BE(16)
 		this.password = buffer.slice(20, 20 + len).toString('base64')
 		this.readOnly = buffer.readInt8(buffer.length - 1) === 1
+
+		if (this.timeout <= 0) {
+			err = new Error('Session Expired')
+		}
 		this.cb(err, this.timeout, this.sessionId, this.password, this.readOnly)
 	}
 
