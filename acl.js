@@ -32,6 +32,7 @@ module.exports = function (format, crypto) {
 	}
 
 	Id.ANYONE = new Id('world', 'anyone')
+	Id.CREATOR = new Id('auth', '')
 
 	function ACL(permissions, id) {
 		this.permissions = permissions
@@ -44,6 +45,10 @@ module.exports = function (format, crypto) {
 		data.writeInt32BE(this.permissions, 0)
 		idData.copy(data, 4)
 		return data
+	}
+
+	ACL.prototype.byteLength = function () {
+		return 4 + this.id.toBuffer().length
 	}
 
 	ACL.prototype.toString = function () {
@@ -73,6 +78,8 @@ module.exports = function (format, crypto) {
 	}
 
 	ACL.OPEN = [new ACL(ACL.Permissions.ALL, Id.ANYONE)]
+	ACL.READ = [new ACL(ACL.Permissions.READ, Id.ANYONE)]
+	ACL.CREATOR = [new ACL(ACL.Permissions.ALL, Id.CREATOR)]
 
 	ACL.digestAcl = function (name, password, permissions) {
 		permissions = permissions || ACL.Permissions.ALL

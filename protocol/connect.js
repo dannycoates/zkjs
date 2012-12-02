@@ -58,7 +58,6 @@ module.exports = function (logger, inherits, Response, ZKErrors) {
 		var len = buffer.readInt32BE(16)
 		this.password = new Buffer(len)
 		buffer.copy(this.password, 0, 20, 20 + len)
-		logger.info('password', this.password, 'len', len)
 		this.readOnly = buffer.readInt8(buffer.length - 1) === 1
 
 		if (this.timeout <= 0) {

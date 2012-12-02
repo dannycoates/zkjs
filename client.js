@@ -44,7 +44,7 @@ module.exports = function (
 	}
 
 	function receiverWatch(watch) {
-		logger.info('watch %s', watch)
+		this.emit('watch', watch)
 	}
 
 	return Client

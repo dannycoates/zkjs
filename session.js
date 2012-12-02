@@ -44,6 +44,7 @@ module.exports = function (
 		this.onClientError = clientError.bind(this)
 		this.onClientClose = clientClose.bind(this)
 		this.onClientZxid = clientZxid.bind(this)
+		this.onClientWatch = clientWatch.bind(this)
 
 		this.onLogin = onLogin.bind(this)
 		this.onLoginComplete = onLoginComplete.bind(this)
@@ -64,6 +65,7 @@ module.exports = function (
 		this.client.on('error', this.onClientError)
 		this.client.on('close', this.onClientClose)
 		this.client.on('zxid', this.onClientZxid)
+		this.client.on('watch', this.onClientWatch)
 		this.client.connect(port || 2181, host || 'localhost')
 	}
 
@@ -371,17 +373,6 @@ module.exports = function (
 
 	// Event handlers
 
-	function clientConnect() {
-		this._login(
-			this.lastZxid,
-			this.timeout,
-			this.id,
-			this.password,
-			this.readOnly,
-			this.onLogin
-		)
-	}
-
 	function onLogin(err, timeout, id, password, readOnly) {
 		if (err) {
 			this._reset()
@@ -410,6 +401,17 @@ module.exports = function (
 		this._reset()
 	}
 
+	function clientConnect() {
+		this._login(
+			this.lastZxid,
+			this.timeout,
+			this.id,
+			this.password,
+			this.readOnly,
+			this.onLogin
+		)
+	}
+
 	function clientEnd() {
 		logger.info('client end')
 	}
@@ -426,6 +428,11 @@ module.exports = function (
 		this.lastZxid = zxid
 	}
 
+	function clientWatch(watch) {
+		logger.info('watch: %s', watch)
+		this.emit(watch.type.toLowerCase(), watch.path)
+	}
+
 	function clientClose(hadError) {
 		logger.info('client closed. with error', hadError)
 		this.client.removeListener('end', this.onClientEnd)
@@ -434,6 +441,7 @@ module.exports = function (
 		this.client.removeListener('error', this.onClientError)
 		this.client.removeListener('close', this.onClientClose)
 		this.client.removeListener('zxid', this.onClientZxid)
+		this.client.removeListener('watch', this.onClientWatch)
 		clearTimeout(this.pingTimer)
 		this.client = null
 	}
@@ -506,7 +514,7 @@ module.exports = function (
 			logger.info('does not exist')
 		}
 		else {
-			logger.info(stat)
+			logger.info(stat.toString())
 		}
 	}
 
