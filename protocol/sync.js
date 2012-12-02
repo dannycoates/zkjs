@@ -1,4 +1,4 @@
-module.exports = function (logger) {
+module.exports = function (logger, ZKErrors) {
 
 	function Sync(path, xid) {
 		this.xid = xid

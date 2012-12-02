@@ -1,4 +1,4 @@
-module.exports = function (logger) {
+module.exports = function (logger, ZKErrors) {
 
 	function Delete(path, version, xid) {
 		this.xid = xid
@@ -28,10 +28,7 @@ module.exports = function (logger) {
 	}
 
 	DeleteResponse.prototype.parse = function (errno, buffer) {
-		if (errno) {
-			return this.cb(ZKErrors.toError(errno))
-		}
-		this.cb(null)
+		return this.cb(ZKErrors.toError(errno))
 	}
 
 	return Delete

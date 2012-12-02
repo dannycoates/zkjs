@@ -12,10 +12,8 @@ module.exports = function () {
 		return this.data
 	}
 
-	function noop() {}
-
-	Close.prototype.response = function () {
-		return { xid: this.xid, parse: noop }
+	Close.prototype.response = function (cb) {
+		return { xid: this.xid, parse: cb }
 	}
 
 	Close.instance = new Close()

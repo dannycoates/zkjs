@@ -102,7 +102,6 @@ module.exports = function (logger, inherits, EventEmitter, State, Watch) {
 
 	Receiver.prototype.push = function (request, cb) {
 		if (this.closed) { return false } // or something
-		logger.info('receiver', 'push')
 		var response = request.response(cb)
 		if (response) {
 			this.queue.push(response)

@@ -1,9 +1,11 @@
 var logger = console
+var assert = require('assert')
 var crypto = require('crypto')
 var format = require('util').format
 var inherits = require('util').inherits
 var EventEmitter = require('events').EventEmitter
 var net = require('net')
+var path = require('path')
 var ReadableStream = require('readable-stream')
 var int53 = require('int53')
 
@@ -15,7 +17,7 @@ var Auth = require('./protocol/auth')(ZKErrors)
 var Close = require('./protocol/close')()
 var Connect = require('./protocol/connect')(logger, ZKErrors)
 var Create = require('./protocol/create')(logger, ACL, ZKErrors)
-var Delete = require('./protocol/delete')(logger)
+var Delete = require('./protocol/delete')(logger, ZKErrors)
 var Exists = require('./protocol/exists')(logger, ZKErrors, ZnodeStat)
 var GetACL = require('./protocol/get-acl')(logger, ZKErrors, ZnodeStat, ACL)
 var GetChildren = require('./protocol/get-children')(logger, ZKErrors, ZnodeStat)
@@ -23,7 +25,7 @@ var GetData = require('./protocol/get-data')(logger, ZKErrors, ZnodeStat)
 var Ping = require('./protocol/ping')()
 var SetACL = require('./protocol/set-acl')(logger, ZKErrors, ZnodeStat, ACL)
 var SetData = require('./protocol/set-data')(logger, ZKErrors, ZnodeStat)
-var Sync = require('./protocol/sync')(logger)
+var Sync = require('./protocol/sync')(logger, ZKErrors)
 var Watch = require('./protocol/watch')(format)
 
 var Receiver = require('./receiver')(logger, inherits, EventEmitter, State, Watch)
@@ -39,8 +41,10 @@ var Client = require('./client')(
 
 var Session = require('./session')(
 	logger,
+	assert,
 	inherits,
 	EventEmitter,
+	path,
 	Client,
 	Auth,
 	Close,
