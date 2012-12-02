@@ -1,4 +1,4 @@
-module.exports = function (logger, ZKErrors) {
+module.exports = function (logger, inherits, Response, ZKErrors) {
 
 	// NOTE: lastZxid and sessionId are supposed to be 64bit integers,
 	// however as long as we treat them as opaque blobs we can use doubles.
@@ -36,14 +36,14 @@ module.exports = function (logger, ZKErrors) {
 	}
 
 	function ConnectResponse(cb) {
-		this.cb = cb
-		this.xid = 0
+		Response.call(this, 0, cb)
 		this.protocolVersion = 0
 		this.timeout = 0
 		this.sessionId = 0
 		this.password = ''
 		this.readOnly = false
 	}
+	inherits(ConnectResponse, Response)
 
 	ConnectResponse.prototype.parse = function (errno, buffer) {
 		// Note: errno is meaningless in this case because Connect requests don't

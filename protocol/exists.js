@@ -1,4 +1,4 @@
-module.exports = function (logger, ZKErrors, ZnodeStat) {
+module.exports = function (logger, inherits, Response, ZKErrors, ZnodeStat) {
 
 	function Exists(path, watcher, xid) {
 		this.xid = xid
@@ -23,13 +23,12 @@ module.exports = function (logger, ZKErrors, ZnodeStat) {
 	}
 
 	function ExistsResponse(xid, cb) {
-		this.xid = xid
-		this.cb = cb
+		Response.call(this, xid, cb)
 		this.znodeStat = null
 	}
+	inherits(ExistsResponse, Response)
 
 	ExistsResponse.prototype.parse = function (errno, buffer) {
-		logger.info('exists response', errno)
 		if (errno === ZKErrors.NoNode) {
 			return this.cb(null, false)
 		}

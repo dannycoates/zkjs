@@ -1,4 +1,4 @@
-module.exports = function (logger, ZKErrors) {
+module.exports = function (logger, inherits, Response, ZKErrors) {
 
 	function Sync(path, xid) {
 		this.xid = xid
@@ -21,9 +21,9 @@ module.exports = function (logger, ZKErrors) {
 	}
 
 	function SyncResponse(xid, cb) {
-		this.xid = xid
-		this.cb = cb
+		Response.call(this, xid, cb)
 	}
+	inherits(SyncResponse, Response)
 
 	SyncResponse.prototype.parse = function (errno, buffer) {
 		if (errno) {

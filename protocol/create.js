@@ -1,4 +1,4 @@
-module.exports = function (logger, ACL, ZKErrors) {
+module.exports = function (logger, inherits, Response, ACL, ZKErrors) {
 
 	function Create(path, data, acls, flags, xid) {
 		this.xid = xid
@@ -46,10 +46,10 @@ module.exports = function (logger, ACL, ZKErrors) {
 	}
 
 	function CreateResponse(xid, cb) {
-		this.xid = xid
-		this.cb = cb
+		Response.call(this, xid, cb)
 		this.path = ''
 	}
+	inherits(CreateResponse, Response)
 
 	CreateResponse.prototype.parse = function (errno, buffer) {
 		if (errno) {

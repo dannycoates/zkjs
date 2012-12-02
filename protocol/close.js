@@ -1,4 +1,4 @@
-module.exports = function () {
+module.exports = function (inherits, Response) {
 
 	function Close() {
 		this.type = -11
@@ -13,10 +13,15 @@ module.exports = function () {
 	}
 
 	Close.prototype.response = function (cb) {
-		return { xid: this.xid, parse: cb }
+		return new CloseResponse(this.xid, cb)
 	}
 
 	Close.instance = new Close()
+
+	function CloseResponse(xid, cb) {
+		Response.call(this, xid, cb)
+	}
+	inherits(CloseResponse, Response)
 
 	return Close
 }

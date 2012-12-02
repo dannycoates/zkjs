@@ -1,4 +1,4 @@
-module.exports = function (ZKErrors) {
+module.exports = function (inherits, Response, ZKErrors) {
 
 	function Auth(authType, id) {
 		this.xid = -4
@@ -22,9 +22,9 @@ module.exports = function (ZKErrors) {
 	}
 
 	function AuthResponse(xid, cb) {
-		this.xid = xid
-		this.cb = cb
+		Response.call(this, xid, cb)
 	}
+	inherits(AuthResponse, Response)
 
 	AuthResponse.prototype.parse = function (errno, buffer) {
 		return this.cb(ZKErrors.toError(errno))

@@ -1,4 +1,4 @@
-module.exports = function (logger, ZKErrors, ZnodeStat) {
+module.exports = function (logger, inherits, Response, ZKErrors, ZnodeStat) {
 
 	function GetChildren(path, watcher, xid) {
 		this.xid = xid
@@ -23,9 +23,9 @@ module.exports = function (logger, ZKErrors, ZnodeStat) {
 	}
 
 	function GetChildrenResponse(xid, cb) {
-		this.xid = xid
-		this.cb = cb
+		Response.call(this, xid, cb)
 	}
+	inherits(GetChildrenResponse, Response)
 
 	GetChildrenResponse.prototype.parse = function (errno, buffer) {
 		if (errno) {

@@ -1,4 +1,4 @@
-module.exports = function (logger, ZKErrors, ZnodeStat, ACL) {
+module.exports = function (logger, inherits, Response, ZKErrors, ZnodeStat, ACL) {
 
 	function SetACL(path, acls, version, xid) {
 		this.xid = xid
@@ -36,9 +36,9 @@ module.exports = function (logger, ZKErrors, ZnodeStat, ACL) {
 	}
 
 	function SetACLResponse(xid, cb) {
-		this.xid = xid
-		this.cb = cb
+		Response.call(this, xid, cb)
 	}
+	inherits(SetACLResponse, Response)
 
 	SetACLResponse.prototype.parse = function (errno, buffer) {
 		if (errno) {
