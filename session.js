@@ -1,6 +1,7 @@
 module.exports = function (
 	logger,
 	assert,
+	format,
 	inherits,
 	EventEmitter,
 	paths,
@@ -21,7 +22,7 @@ module.exports = function (
 
 	function Session(options) {
 		options = options || {}
-		options.timeout = options.timeout || 10000
+		options.timeout = options.timeout || 1200000
 		options.readOnly = options.readOnly || false
 
 		this.options = options
@@ -29,7 +30,7 @@ module.exports = function (
 		this.lastZxid = 0
 		this.timeout = options.timeout
 		this.id = 0
-		this.password = null
+		this.password = Connect.BLANK_PASSWORD
 		this.readOnly = options.readOnly
 		this.xid = 1
 		this.pingTimer = null
@@ -42,6 +43,7 @@ module.exports = function (
 		this.onClientDrain = clientDrain.bind(this)
 		this.onClientError = clientError.bind(this)
 		this.onClientClose = clientClose.bind(this)
+		this.onClientZxid = clientZxid.bind(this)
 
 		this.onLogin = onLogin.bind(this)
 		this.onLoginComplete = onLoginComplete.bind(this)
@@ -61,6 +63,7 @@ module.exports = function (
 		this.client.on('drain', this.onClientDrain)
 		this.client.on('error', this.onClientError)
 		this.client.on('close', this.onClientClose)
+		this.client.on('zxid', this.onClientZxid)
 		this.client.connect(port || 2181, host || 'localhost')
 	}
 
@@ -133,7 +136,7 @@ module.exports = function (
 
 	Session.prototype.del = function (path, version, cb) {
 		assert(typeof(path) === 'string', 'path is required')
-		assert(version, 'version is required')
+		assert(typeof(version) === 'number', 'version is required')
 		cb = cb || defaultDel
 		this._send(new Delete(this._chroot(path), version, this.xid++), cb)
 	}
@@ -235,8 +238,8 @@ module.exports = function (
 
 	Session.prototype.set = function (path, data, version, cb) {
 		assert(typeof(path) === 'string', 'path is required')
-		assert(data, 'data is required')
-		assert(version, 'version is required')
+		assert(data !== undefined, 'data is required')
+		assert(typeof(version) === 'number', 'version is required')
 
 		if (!Buffer.isBuffer(data)) {
 			data = new Buffer(data.toString())
@@ -250,7 +253,7 @@ module.exports = function (
 	Session.prototype.setACL = function (path, acls, version, cb) {
 		assert(typeof(path) === 'string', 'path is required')
 		assert(Array.isArray(acls), 'an array of acls is required')
-		assert(version, 'version is required')
+		assert(typeof(version) === 'number', 'version is required')
 
 		this._send(new SetACL(this._chroot(path), acls, version, this.xid++), cb)
 	}
@@ -263,6 +266,24 @@ module.exports = function (
 			function (err, path) {
 				cb(err, this._unchroot(path))
 			}.bind(this)
+		)
+	}
+
+	Session.prototype.toString = function () {
+		var idBuffer = new Buffer(8)
+		var zxidBuffer = new Buffer(8)
+
+		idBuffer.writeDoubleBE(this.id, 0)
+		zxidBuffer.writeDoubleBE(this.lastZxid, 0)
+		return format(
+			'Session(id: %s zxid: %s t/o: %d pw: %s r/o: %s xid: %d root: "%s")',
+			idBuffer.toString('hex'),
+			zxidBuffer.toString('hex'),
+			this.timeout,
+			this.password.toString('hex'),
+			this.readOnly,
+			this.xid,
+			this.root
 		)
 	}
 
@@ -303,7 +324,7 @@ module.exports = function (
 	Session.prototype._reset = function () {
 		this.timeout = this.options.timeout
 		this.id = 0
-		this.password = null
+		this.password = Connect.BLANK_PASSWORD
 		this.readOnly = this.options.readOnly
 	}
 
@@ -401,6 +422,10 @@ module.exports = function (
 		logger.info('client error', err.message)
 	}
 
+	function clientZxid(zxid) {
+		this.lastZxid = zxid
+	}
+
 	function clientClose(hadError) {
 		logger.info('client closed. with error', hadError)
 		this.client.removeListener('end', this.onClientEnd)
@@ -408,6 +433,7 @@ module.exports = function (
 		this.client.removeListener('drain', this.onClientDrain)
 		this.client.removeListener('error', this.onClientError)
 		this.client.removeListener('close', this.onClientClose)
+		this.client.removeListener('zxid', this.onClientZxid)
 		clearTimeout(this.pingTimer)
 		this.client = null
 	}

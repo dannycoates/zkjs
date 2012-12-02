@@ -80,10 +80,9 @@ module.exports = function (logger, inherits, EventEmitter, State, Watch) {
 					else {
 						data = this.state.data
 					}
+					this.emit('zxid', this.state.zxid)
 				}
 				if (data) {
-					this.emit('zxid', this.state.zxid)
-
 					var response = this.queue.shift()
 					if (response.xid !== this.state.xid) {
 						response.error(this.state.xid)

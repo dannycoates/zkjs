@@ -1,5 +1,8 @@
 module.exports = function (logger, inherits, Response, ZKErrors) {
 
+
+	var BLANK_PASSWORD = new Buffer(16)
+	BLANK_PASSWORD.fill(0)
 	// NOTE: lastZxid and sessionId are supposed to be 64bit integers,
 	// however as long as we treat them as opaque blobs we can use doubles.
 	function ConnectRequest(
@@ -12,21 +15,21 @@ module.exports = function (logger, inherits, Response, ZKErrors) {
 		this.lastZxid = lastZxid
 		this.timeout = timeout
 		this.sessionId = sessionId
-		this.password = password || 'AA==' //base64 of '\0'
+		this.password = password || BLANK_PASSWORD
 		this.readOnly = readOnly
 	}
 
+	ConnectRequest.BLANK_PASSWORD = BLANK_PASSWORD
+
 	ConnectRequest.prototype.toBuffer = function () {
-		var pwlen = Buffer.byteLength(this.password)
-		var data = new Buffer(28 + (pwlen ? pwlen + 1 : 0))
+		var pwlen = this.password.length
+		var data = new Buffer(4 + 8 + 4 + 8 + 4 + pwlen + 1)
 		data.writeInt32BE(this.protocolVersion, 0)
 		data.writeDoubleBE(this.lastZxid, 4)
 		data.writeInt32BE(this.timeout, 12)
 		data.writeDoubleBE(this.sessionId, 16)
-		if (pwlen > 0) {
-			data.writeInt32BE(pwlen || -1, 24)
-			data.write(this.password, 28, pwlen, 'base64')
-		}
+		data.writeInt32BE(pwlen, 24)
+		this.password.copy(data, 28)
 		data.writeInt8(this.readOnly ? 1 : 0, data.length - 1)
 		return data
 	}
@@ -53,7 +56,9 @@ module.exports = function (logger, inherits, Response, ZKErrors) {
 		this.timeout = buffer.readInt32BE(4)
 		this.sessionId = buffer.readDoubleBE(8)
 		var len = buffer.readInt32BE(16)
-		this.password = buffer.slice(20, 20 + len).toString('base64')
+		this.password = new Buffer(len)
+		buffer.copy(this.password, 0, 20, 20 + len)
+		logger.info('password', this.password, 'len', len)
 		this.readOnly = buffer.readInt8(buffer.length - 1) === 1
 
 		if (this.timeout <= 0) {

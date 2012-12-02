@@ -45,6 +45,7 @@ var Client = require('./client')(
 var Session = require('./session')(
 	logger,
 	assert,
+	format,
 	inherits,
 	EventEmitter,
 	path,

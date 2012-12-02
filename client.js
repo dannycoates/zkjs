@@ -40,7 +40,6 @@ module.exports = function (
 	}
 
 	function receiverZxid(zxid) {
-		//logger.info('zxid', zxid)
 		this.emit('zxid', zxid)
 	}
 
