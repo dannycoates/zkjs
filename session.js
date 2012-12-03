@@ -6,6 +6,7 @@ module.exports = function (
 	EventEmitter,
 	paths,
 	Client,
+	Watcher,
 	Auth,
 	Close,
 	Connect,
@@ -18,15 +19,17 @@ module.exports = function (
 	Ping,
 	SetACL,
 	SetData,
+	SetWatches,
 	Sync) {
 
 	function Session(options) {
 		options = options || {}
 		options.timeout = options.timeout || 1200000
 		options.readOnly = options.readOnly || false
+		options.autoResetWatches =
+			options.hasOwnProperty('autoResetWatches') ? options.autoResetWatches : true
 
 		this.options = options
-		this.client = null
 		this.lastZxid = 0
 		this.timeout = options.timeout
 		this.id = 0
@@ -37,6 +40,9 @@ module.exports = function (
 		this.startPinger = pingLoop.bind(this)
 		this.credentials = options.credentials || []
 		this.root = options.root || ''
+
+		this.client = null
+		this.watcher = new Watcher()
 
 		this.onClientConnect = clientConnect.bind(this)
 		this.onClientEnd = clientEnd.bind(this)
@@ -139,51 +145,41 @@ module.exports = function (
 	Session.prototype.del = function (path, version, cb) {
 		assert(typeof(path) === 'string', 'path is required')
 		assert(typeof(version) === 'number', 'version is required')
+
 		cb = cb || defaultDel
 		this._send(new Delete(this._chroot(path), version, this.xid++), cb)
 	}
 
 	Session.prototype.exists = function (path, watch, cb) {
 		assert(typeof(path) === 'string', 'path is required')
-		if (cb === undefined) {
-			if (watch === undefined) {
-				// path
-				cb = defaultExists
-				watch = false
-			}
-			else if (typeof(watch) === 'function') {
-				// path, cb
-				cb = watch
-				watch = false
-			}
-			else {
-				// path, watch
-				cb = defaultExists
-			}
-		}
-		this._send(new Exists(this._chroot(path), watch, this.xid++), cb)
+		assert(watch !== undefined, 'watch is required')
+
+		cb = cb || defaultExists
+		this._send(
+			new Exists(this._chroot(path), watch, this.xid++),
+			function (err, exists, stat) {
+				if (!err && watch) {
+					this.watcher.addExistsWatch(path, watch)
+				}
+				cb(err, exists, stat)
+			}.bind(this)
+		)
 	}
 
 	Session.prototype.get = function (path, watch, cb) {
 		assert(typeof(path) === 'string', 'path is required')
+		assert(watch !== undefined, 'watch is required')
 
-		if (cb === undefined) {
-			if (watch === undefined) {
-				// path
-				cb = defaultGet
-				watch = false
-			}
-			else if (typeof(watch) === 'function') {
-				// path, cb
-				cb = watch
-				watch = false
-			}
-			else {
-				// path, watch
-				cb = defaultGet
-			}
-		}
-		this._send(new GetData(this._chroot(path), watch, this.xid++), cb)
+		cb = cb || defaultGet
+		this._send(
+			new GetData(this._chroot(path), watch, this.xid++),
+			function (err, data, stat) {
+				if (!err && watch) {
+					this.watcher.addDataWatch(path, watch)
+				}
+				cb(err, data, stat)
+			}.bind(this)
+		)
 	}
 
 	Session.prototype.getACL = function (path, cb) {
@@ -194,24 +190,18 @@ module.exports = function (
 
 	Session.prototype.getChildren = function (path, watch, cb) {
 		assert(typeof(path) === 'string', 'path is required')
+		assert(watch !== undefined, 'watch is required')
 
-		if (cb === undefined) {
-			if (watch === undefined) {
-				// path
-				cb = defaultGetChildren
-				watch = false
-			}
-			else if (typeof(watch) === 'function') {
-				// path, cb
-				cb = watch
-				watch = false
-			}
-			else {
-				// path, watch
-				cb = defaultGetChildren
-			}
-		}
-		this._send(new GetChildren(this._chroot(path), watch, this.xid++), cb)
+		cb = cb || defaultGetChildren
+		this._send(
+			new GetChildren(this._chroot(path), watch, this.xid++),
+			function (err, children, stat) {
+				if (!err && watch) {
+					this.watcher.addChildWatch(path, watch)
+				}
+				cb(err, children, stat)
+			}.bind(this)
+		)
 	}
 
 	Session.prototype.mkdirp = function (path, cb) {
@@ -220,6 +210,7 @@ module.exports = function (
 		cb = cb || defaultCreate
 		this.exists(
 			path,
+			false,
 			function (err, exists) {
 				if (exists) {
 					return cb(null, path)
@@ -303,7 +294,7 @@ module.exports = function (
 		if (!path) {
 			return null
 		}
-		return path.replace(this.root, '')
+		return path.substr(this.root.length)
 	}
 
 	Session.prototype._login = function (
@@ -366,6 +357,28 @@ module.exports = function (
 		}
 	}
 
+	Session.prototype._setWatches = function () {
+		if (this.options.autoResetWatches) {
+			if (this.watcher.count() > 0) {
+				var chroot = this._chroot.bind(this)
+				var watchPaths = this.watcher.paths()
+				watchPaths.child = watchPaths.child.map(chroot)
+				watchPaths.data = watchPaths.data.map(chroot)
+				watchPaths.exists = watchPaths.exists.map(chroot)
+
+				this._send(
+					new SetWatches(this.lastZxid, this.watcher.paths()),
+					function (err) {
+						logger.info('set-watches error: %s', err)
+					}
+				)
+			}
+		}
+		else {
+			this.watcher.reset()
+		}
+	}
+
 	function pingLoop() {
 		this.pingTimer = setTimeout(this.startPinger, this.timeout / 2)
 		this._ping()
@@ -392,6 +405,7 @@ module.exports = function (
 
 	function onLoginComplete(err) {
 		if (!err) {
+			this._setWatches()
 			this.startPinger()
 		}
 		this.emit('connect', err)
@@ -429,8 +443,9 @@ module.exports = function (
 	}
 
 	function clientWatch(watch) {
-		logger.info('watch: %s', watch)
-		this.emit(watch.type.toLowerCase(), watch.path)
+		watch.path = this._unchroot(watch.path)
+		this.watcher.trigger(watch)
+		this.emit(watch.toJSON().type.toLowerCase(), watch.path)
 	}
 
 	function clientClose(hadError) {

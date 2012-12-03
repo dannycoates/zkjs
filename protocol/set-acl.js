@@ -8,14 +8,13 @@ module.exports = function (logger, inherits, Response, ZKErrors, ZnodeStat, ACL)
 		this.version = version
 	}
 
+	function acl2buffer(acl) { return acl.toBuffer() }
+	function sumLength(total, buffer) { return total + buffer.length }
+
 	SetACL.prototype.toBuffer = function () {
 		var pathlen = Buffer.byteLength(this.path)
-		var aclsBuffers = this.acls.map(
-			function (acl) {
-				return acl.toBuffer()
-			}
-		)
-		var aclslen = aclsBuffers.reduce(function (total, acl) { return total + acl.length }, 0)
+		var aclsBuffers = this.acls.map(acl2buffer)
+		var aclslen = aclsBuffers.reduce(sumLength, 0)
 		var data = new Buffer(4 + 4 + 4 + pathlen + 4 + aclslen + 4)
 		data.writeInt32BE(this.xid, 0)
 		data.writeInt32BE(this.type, 4)

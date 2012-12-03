@@ -26,12 +26,14 @@ var GetChildren = require('./protocol/get-children')(logger, inherits, Response,
 var GetData = require('./protocol/get-data')(logger, inherits, Response, ZKErrors, ZnodeStat)
 var SetACL = require('./protocol/set-acl')(logger, inherits, Response, ZKErrors, ZnodeStat, ACL)
 var SetData = require('./protocol/set-data')(logger, inherits, Response, ZKErrors, ZnodeStat)
+var SetWatches = require('./protocol/set-watches')(logger, inherits, Response, ZKErrors)
 var Sync = require('./protocol/sync')(logger, inherits, Response, ZKErrors)
 
 var Ping = require('./protocol/ping')()
 var Watch = require('./protocol/watch')(format)
 
 var Receiver = require('./receiver')(logger, inherits, EventEmitter, State, Watch)
+var Watcher = require('./watcher')(logger, Watch)
 
 var Client = require('./client')(
 	logger,
@@ -50,6 +52,7 @@ var Session = require('./session')(
 	EventEmitter,
 	path,
 	Client,
+	Watcher,
 	Auth,
 	Close,
 	Connect,
@@ -62,6 +65,7 @@ var Session = require('./session')(
 	Ping,
 	SetACL,
 	SetData,
+	SetWatches,
 	Sync)
 
 module.exports = Session
