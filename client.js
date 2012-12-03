@@ -15,10 +15,12 @@ module.exports = function (
 		this.onPing = receiverPing.bind(this)
 		this.onZxid = receiverZxid.bind(this)
 		this.onWatch = receiverWatch.bind(this)
+		this.onReceiverEnd = receiverEnd.bind(this)
 
 		this.receiver.on('ping', this.onPing)
 		this.receiver.on('zxid', this.onZxid)
 		this.receiver.on('watch', this.onWatch)
+		this.receiver.on('end', this.onReceiverEnd)
 
 		net.Socket.call(this)
 	}
@@ -35,6 +37,10 @@ module.exports = function (
 		}
 	}
 
+	Client.prototype.purge = function () {
+		this.receiver.purge()
+	}
+
 	function receiverPing() {
 		//logger.info('ping')
 	}
@@ -45,6 +51,10 @@ module.exports = function (
 
 	function receiverWatch(watch) {
 		this.emit('watch', watch)
+	}
+
+	function receiverEnd() {
+		this.emit('receiverEnd')
 	}
 
 	return Client

@@ -13,7 +13,7 @@ var State = require('./state')(inherits)
 var ZKErrors = require('./protocol/zk-errors')()
 var ACL = require('./acl')(format, crypto)
 var ZnodeStat = require('./protocol/znode-stat')(format, int53)
-var Response = require('./protocol/response')(ZKErrors)
+var Response = require('./protocol/response')(logger, ZKErrors)
 
 var Auth = require('./protocol/auth')(inherits, Response, ZKErrors)
 var Close = require('./protocol/close')(inherits, Response)
@@ -34,6 +34,7 @@ var Ping = require('./protocol/ping')()
 var Watch = require('./protocol/watch')(format)
 
 var Receiver = require('./receiver')(logger, inherits, EventEmitter, State, Watch)
+var RequestBuffer = require('./request-buffer')()
 var Watcher = require('./watcher')(logger, Watch)
 
 var Client = require('./client')(
@@ -45,6 +46,15 @@ var Client = require('./client')(
 	Receiver
 )
 
+var Ensemble = require('./ensemble')(
+	logger,
+	inherits,
+	EventEmitter,
+	Client,
+	RequestBuffer,
+	Ping
+)
+
 var Session = require('./session')(
 	logger,
 	assert,
@@ -52,7 +62,7 @@ var Session = require('./session')(
 	inherits,
 	EventEmitter,
 	path,
-	Client,
+	Ensemble,
 	Watcher,
 	Auth,
 	Close,
@@ -63,7 +73,6 @@ var Session = require('./session')(
 	GetACL,
 	GetChildren,
 	GetData,
-	Ping,
 	SetACL,
 	SetData,
 	SetWatches,

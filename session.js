@@ -5,7 +5,7 @@ module.exports = function (
 	inherits,
 	EventEmitter,
 	paths,
-	Client,
+	Ensemble,
 	Watcher,
 	Auth,
 	Close,
@@ -16,7 +16,6 @@ module.exports = function (
 	GetACL,
 	GetChildren,
 	GetData,
-	Ping,
 	SetACL,
 	SetData,
 	SetWatches,
@@ -37,25 +36,21 @@ module.exports = function (
 		this.password = Connect.BLANK_PASSWORD
 		this.readOnly = options.readOnly
 		this.xid = 1
-		this.pingTimer = null
-		this.startPinger = pingLoop.bind(this)
 		this.credentials = options.credentials || []
 		this.root = options.root || ''
-
-		this.client = null
+		this.hosts = options.hosts || ['localhost:2181']
 		this.watcher = new Watcher()
 
-		this.onClientConnect = clientConnect.bind(this)
-		this.onClientEnd = clientEnd.bind(this)
-		this.onClientDrain = clientDrain.bind(this)
-		this.onClientError = clientError.bind(this)
-		this.onClientClose = clientClose.bind(this)
-		this.onClientZxid = clientZxid.bind(this)
-		this.onClientWatch = clientWatch.bind(this)
+		this.ensemble = new Ensemble(this)
+		this.onEnsembleZxid = ensembleZxid.bind(this)
+		this.onEnsembleWatch = ensembleWatch.bind(this)
+		this.onEnsembleExpired = ensembleExpired.bind(this)
+		this.ensemble.on('zxid', this.onEnsembleZxid)
+		this.ensemble.on('watch', this.onEnsembleWatch)
+		this.ensemble.on('expired', this.onEnsembleExpired)
 
-		this.onLogin = onLogin.bind(this)
-		this.onLoginComplete = onLoginComplete.bind(this)
 		this.onClose = onClose.bind(this)
+
 		EventEmitter.call(this)
 	}
 	inherits(Session, EventEmitter)
@@ -64,16 +59,12 @@ module.exports = function (
 
 	//API
 
-	Session.prototype.connect = function (host, port) {
-		this.client = new Client()
-		this.client.on('end', this.onClientEnd)
-		this.client.on('connect', this.onClientConnect)
-		this.client.on('drain', this.onClientDrain)
-		this.client.on('error', this.onClientError)
-		this.client.on('close', this.onClientClose)
-		this.client.on('zxid', this.onClientZxid)
-		this.client.on('watch', this.onClientWatch)
-		this.client.connect(port || 2181, host || 'localhost')
+	Session.prototype.start = function (cb) {
+		if (typeof(cb) === 'function') {
+			this.ensemble.once('connect')
+		}
+		this.ensemble.session = this
+		this.ensemble.connect()
 	}
 
 	Session.prototype.auth = function (id, cb) {
@@ -324,21 +315,17 @@ module.exports = function (
 		return path.substr(this.root.length)
 	}
 
-	Session.prototype._login = function (
-		lastZxid,
-		timeout,
-		sessionId,
-		password,
-		readOnly,
-		cb) {
+	Session.prototype.login = function (cb) {
 		this._send(
-			new Connect(lastZxid, timeout, sessionId, password, readOnly),
+			new Connect(
+				this.lastZxid,
+				this.timeout,
+				this.id,
+				this.password,
+				this.readOnly
+			),
 			cb
 		)
-	}
-
-	Session.prototype._ping = function () {
-		this._send(Ping.instance)
 	}
 
 	Session.prototype._reset = function () {
@@ -349,7 +336,7 @@ module.exports = function (
 	}
 
 
-	Session.prototype._sendCredentials = function (cb) {
+	Session.prototype.sendCredentials = function (cb) {
 		this._chain(
 			this.credentials.map(
 				function (id) {
@@ -363,7 +350,7 @@ module.exports = function (
 	Session.prototype._chain = function (requests, cb) {
 		var request = requests.pop()
 		if (request) {
-			this.send(
+			this._send(
 				request,
 				function onResponse(err) {
 					if (err) {
@@ -379,12 +366,17 @@ module.exports = function (
 	}
 
 	Session.prototype._send = function (request, cb) {
-		if (this.client) { // TODO: handle disconnected state
-			this.client.send(request, cb)
-		}
+			this.ensemble.send(request, cb)
 	}
 
-	Session.prototype._setWatches = function () {
+	Session.prototype.setParameters = function(id, password, timeout, readOnly) {
+		this.id = id
+		this.password = password
+		this.timeout = timeout
+		this.readOnly = readOnly
+	}
+
+	Session.prototype.setWatches = function () {
 		if (this.options.autoResetWatches) {
 			if (this.watcher.count() > 0) {
 				var chroot = this._chroot.bind(this)
@@ -406,86 +398,25 @@ module.exports = function (
 		}
 	}
 
-	function pingLoop() {
-		this.pingTimer = setTimeout(this.startPinger, this.timeout / 2)
-		this._ping()
-	}
-
 	// Event handlers
-
-	function onLogin(err, timeout, id, password, readOnly) {
-		if (err) {
-			this._reset()
-			return this.emit('expired')
-		}
-		this.timeout = timeout
-		this.id = id
-		this.password = password
-		this.readOnly = readOnly
-		if (this.credentials.length > 0) {
-			this._sendCredentials(this.onLoginComplete)
-		}
-		else {
-			this.onLoginComplete()
-		}
-	}
-
-	function onLoginComplete(err) {
-		if (!err) {
-			this._setWatches()
-			this.startPinger()
-		}
-		this.emit('connect', err)
-	}
 
 	function onClose() {
 		this._reset()
 	}
 
-	function clientConnect() {
-		this._login(
-			this.lastZxid,
-			this.timeout,
-			this.id,
-			this.password,
-			this.readOnly,
-			this.onLogin
-		)
+	function ensembleExpired() {
+		this._reset()
+		this.emit('expired')
 	}
 
-	function clientEnd() {
-		logger.info('client end')
-	}
-
-	function clientDrain() {
-		//logger.info('client', 'drain')
-	}
-
-	function clientError(err) {
-		logger.info('client error', err.message)
-	}
-
-	function clientZxid(zxid) {
+	function ensembleZxid(zxid) {
 		this.lastZxid = zxid
 	}
 
-	function clientWatch(watch) {
+	function ensembleWatch(watch) {
 		watch.path = this._unchroot(watch.path)
 		this.watcher.trigger(watch)
 		this.emit(watch.toJSON().type.toLowerCase(), watch.path)
-	}
-
-	function clientClose(hadError) {
-		logger.info('client closed. with error', hadError)
-		this.client.removeListener('end', this.onClientEnd)
-		this.client.removeListener('connect', this.onClientConnect)
-		this.client.removeListener('drain', this.onClientDrain)
-		this.client.removeListener('error', this.onClientError)
-		this.client.removeListener('close', this.onClientClose)
-		this.client.removeListener('zxid', this.onClientZxid)
-		this.client.removeListener('watch', this.onClientWatch)
-		clearTimeout(this.pingTimer)
-		this.client = null
 	}
 
 	return Session

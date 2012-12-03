@@ -61,7 +61,7 @@ module.exports = function (logger, inherits, Response, ZKErrors) {
 		this.readOnly = buffer.readInt8(buffer.length - 1) === 1
 
 		if (this.timeout <= 0) {
-			err = new Error('Session Expired')
+			err = new Error('expired')
 		}
 		this.cb(err, this.timeout, this.sessionId, this.password, this.readOnly)
 	}

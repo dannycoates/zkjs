@@ -1,4 +1,4 @@
-module.exports = function (ZKErrors) {
+module.exports = function (logger, ZKErrors) {
 
 	function Response(xid, cb) {
 		this.xid = xid
