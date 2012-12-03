@@ -20,7 +20,8 @@ module.exports = function (
 	SetACL,
 	SetData,
 	SetWatches,
-	Sync) {
+	Sync,
+	defaults) {
 
 	function Session(options) {
 		options = options || {}
@@ -96,13 +97,13 @@ module.exports = function (
 			if (acls === undefined) {
 				if (flags === undefined) {
 					// path, data
-					cb = defaultCreate
+					cb = defaults.create
 					flags = Create.flags.NONE
 					acls = null
 				}
 				else if (Array.isArray(flags)) {
 					// path, data, acls
-					cb = defaultCreate
+					cb = defaults.create
 					acls = flags
 					flags = Create.flags.NONE
 				}
@@ -114,7 +115,7 @@ module.exports = function (
 				}
 				else {
 					// path, data, flags
-					cb = defaultCreate
+					cb = defaults.create
 					acls = null
 				}
 			}
@@ -126,7 +127,7 @@ module.exports = function (
 			}
 			else if (Array.isArray(acls)) {
 				// path, data, flags, acls
-				cb = defaultCreate
+				cb = defaults.create
 			}
 			else {
 				// path, data, flags, cb
@@ -146,15 +147,24 @@ module.exports = function (
 		assert(typeof(path) === 'string', 'path is required')
 		assert(typeof(version) === 'number', 'version is required')
 
-		cb = cb || defaultDel
+		cb = cb || defaults.del
 		this._send(new Delete(this._chroot(path), version, this.xid++), cb)
 	}
 
 	Session.prototype.exists = function (path, watch, cb) {
 		assert(typeof(path) === 'string', 'path is required')
-		assert(watch !== undefined, 'watch is required')
 
-		cb = cb || defaultExists
+		if (cb === undefined) {
+			if (typeof(watch) === 'function') {
+				// path, cb
+				cb = watch
+			}
+			else {
+				// path
+				cb = defaults.exists
+			}
+			watch = false
+		}
 		this._send(
 			new Exists(this._chroot(path), watch, this.xid++),
 			function (err, exists, stat) {
@@ -168,9 +178,18 @@ module.exports = function (
 
 	Session.prototype.get = function (path, watch, cb) {
 		assert(typeof(path) === 'string', 'path is required')
-		assert(watch !== undefined, 'watch is required')
 
-		cb = cb || defaultGet
+		if (cb === undefined) {
+			if (typeof(watch) === 'function') {
+				// path, cb
+				cb = watch
+			}
+			else {
+				// path
+				cb = defaults.get
+			}
+			watch = false
+		}
 		this._send(
 			new GetData(this._chroot(path), watch, this.xid++),
 			function (err, data, stat) {
@@ -185,14 +204,22 @@ module.exports = function (
 	Session.prototype.getACL = function (path, cb) {
 		assert(typeof(path) === 'string', 'path is required')
 
-		this._send(new GetACL(this._chroot(path), this.xid++), cb || defaultGetACL)
+		this._send(new GetACL(this._chroot(path), this.xid++), cb || defaults.getACL)
 	}
 
 	Session.prototype.getChildren = function (path, watch, cb) {
 		assert(typeof(path) === 'string', 'path is required')
-		assert(watch !== undefined, 'watch is required')
 
-		cb = cb || defaultGetChildren
+		if (cb === undefined) {
+			if (typeof(watch) === 'function') {
+				// path, cb
+				cb = watch
+			}
+			else {
+				cb = defaults.getChildren
+			}
+			watch = false
+		}
 		this._send(
 			new GetChildren(this._chroot(path), watch, this.xid++),
 			function (err, children, stat) {
@@ -207,7 +234,7 @@ module.exports = function (
 	Session.prototype.mkdirp = function (path, cb) {
 		assert(typeof(path) === 'string', 'path is required')
 
-		cb = cb || defaultCreate
+		cb = cb || defaults.create
 		this.exists(
 			path,
 			false,
@@ -239,7 +266,7 @@ module.exports = function (
 		}
 		this._send(
 			new SetData(this._chroot(path), data, version, this.xid++),
-			cb || defaultSet
+			cb || defaults.set
 		)
 	}
 
@@ -459,78 +486,6 @@ module.exports = function (
 		this.client.removeListener('watch', this.onClientWatch)
 		clearTimeout(this.pingTimer)
 		this.client = null
-	}
-
-	// Default callbacks
-
-	function defaultCreate(err, path) {
-		if (err) {
-			return logger.error(err.message)
-		}
-		logger.info('created', path)
-	}
-
-	function defaultDel(err) {
-		if (err) {
-			return logger.error(err.message)
-		}
-		logger.info('deleted')
-	}
-
-	function defaultGet(err, data, stat) {
-		if (err) {
-			return logger.error(err.message)
-		}
-		logger.info(
-			'length: %d data: %s stat: %s',
-			data.length,
-			data.toString('utf8', 0, Math.min(data.length, 256)),
-			stat
-		)
-	}
-
-	function defaultGetACL(err, acls, stat) {
-		if (err) {
-			return logger.error(err.message)
-		}
-		logger.info(
-			'acls: [%s] stat: %s',
-			acls.join(','),
-			stat
-		)
-	}
-
-	function defaultGetChildren(err, children, stat) {
-		if (err) {
-			return logger.error(err.message)
-		}
-		logger.info(
-			'children: [%s] stat: %s',
-			children.join(','),
-			stat
-		)
-	}
-
-	function defaultSet(err, stat) {
-		if (err) {
-			return logger.error(err.message)
-		}
-		logger.info(
-			'set stat: %s',
-			stat
-		)
-	}
-
-	function defaultExists(err, exists, stat) {
-		if (err) {
-			return logger.error(err.message)
-		}
-		if (!exists) {
-			logger.info('does not exist')
-		}
-		else {
-			logger.info(stat.toString())
-		}
 	}
 
 	return Session

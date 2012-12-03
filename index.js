@@ -28,6 +28,7 @@ var SetACL = require('./protocol/set-acl')(logger, inherits, Response, ZKErrors,
 var SetData = require('./protocol/set-data')(logger, inherits, Response, ZKErrors, ZnodeStat)
 var SetWatches = require('./protocol/set-watches')(logger, inherits, Response, ZKErrors)
 var Sync = require('./protocol/sync')(logger, inherits, Response, ZKErrors)
+var defaults = require('./default-callbacks')(logger)
 
 var Ping = require('./protocol/ping')()
 var Watch = require('./protocol/watch')(format)
@@ -66,6 +67,7 @@ var Session = require('./session')(
 	SetACL,
 	SetData,
 	SetWatches,
-	Sync)
+	Sync,
+	defaults)
 
 module.exports = Session
