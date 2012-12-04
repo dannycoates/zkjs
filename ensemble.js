@@ -3,6 +3,8 @@ module.exports = function (logger, inherits, EventEmitter, Client, RequestBuffer
 	function Ensemble(session) {
 		this.session = session
 		this.client = null
+		this.reconnectAttempts = 0
+		this.reconnectTimer = null
 		this.current = Math.floor(Math.random() * this.session.hosts.length)
 		this.requestBuffer = new RequestBuffer()
 		this.pingTimer = null
@@ -52,6 +54,25 @@ module.exports = function (logger, inherits, EventEmitter, Client, RequestBuffer
 		this.send(Ping.instance)
 	}
 
+	Ensemble.prototype._reconnect = function () {
+		if (this.reconnectAttempts) {
+			this.reconnectTimer = setTimeout(
+				this.connect.bind(this),
+				exponentialBackoff(this.reconnectAttempts)
+			)
+		}
+		else {
+			this.connect()
+		}
+		this.reconnectAttempts++
+	}
+
+	function exponentialBackoff(attempt) {
+		return Math.floor(
+			Math.random() * Math.pow(2, attempt) * 100
+		)
+	}
+
 	function pingLoop() {
 		clearTimeout(this.pingTimer)
 		this.pingTimer = setTimeout(this.startPinger, this.session.timeout / 2)
@@ -65,12 +86,14 @@ module.exports = function (logger, inherits, EventEmitter, Client, RequestBuffer
 				return this.emit('expired')
 			}
 			else if (err.message === 'aborted') {
-				return this.connect()
+				logger.info('connect aborted')
+				return
 			}
 		}
 		if (readOnly && !this.session.readOnly) {
 			//TODO fuck you, close & reconnect ???
 		}
+		this.reconnectAttempts = 0
 		this.session.setParameters(id, password, timeout, readOnly)
 		this.session.sendCredentials(this.onLoginComplete)
 	}
@@ -118,15 +141,10 @@ module.exports = function (logger, inherits, EventEmitter, Client, RequestBuffer
 		this.client.removeListener('zxid', this.onClientZxid)
 		this.client.removeListener('watch', this.onClientWatch)
 		clearTimeout(this.pingTimer)
-		this.client.purge()
 		this.pingTimer = null
 		this.client = null
-		setTimeout(
-			function () {
-				this.connect() //TODO: some backoff
-			}.bind(this),
-			100
-		)
+		clearTimeout(this.reconnectTimer)
+		this._reconnect()
 	}
 
 	return Ensemble

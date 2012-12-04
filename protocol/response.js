@@ -6,6 +6,7 @@ module.exports = function (logger, ZKErrors) {
 	}
 
 	Response.prototype.abort = function () {
+		logger.info('aborted', this.constructor.name)
 		this.cb(new Error('aborted'))
 	}
 

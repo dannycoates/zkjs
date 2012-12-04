@@ -108,12 +108,6 @@ module.exports = function (logger, inherits, EventEmitter, State, Watch) {
 		return true
 	}
 
-	Receiver.prototype.purge = function () {
-		while (this.queue.length > 0) {
-			this.queue.shift().abort()
-		}
-	}
-
 	function streamReadable() {
 		this.read()
 	}
@@ -121,8 +115,11 @@ module.exports = function (logger, inherits, EventEmitter, State, Watch) {
 	function streamEnd() {
 		logger.info(
 			'receiver', 'ended',
-			'queue', this.queue.length
+			'queue', this.queue.map(function(x) { return x.constructor.name })
 		)
+		while (this.queue.length > 0) {
+			this.queue.shift().abort()
+		}
 		this.closed = true
 		this.stream.removeListener('readable', this.onStreamReadable)
 		this.stream.removeListener('end', this.onStreamEnd)

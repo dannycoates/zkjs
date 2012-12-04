@@ -37,10 +37,6 @@ module.exports = function (
 		}
 	}
 
-	Client.prototype.purge = function () {
-		this.receiver.purge()
-	}
-
 	function receiverPing() {
 		//logger.info('ping')
 	}
