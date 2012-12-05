@@ -1,4 +1,10 @@
-module.exports = function (logger, inherits, EventEmitter, Client, RequestBuffer, Ping) {
+module.exports = function (
+	logger,
+	inherits,
+	EventEmitter,
+	Client,
+	RequestBuffer,
+	Ping) {
 
 	function Ensemble(session) {
 		this.session = session
@@ -6,7 +12,7 @@ module.exports = function (logger, inherits, EventEmitter, Client, RequestBuffer
 		this.reconnectAttempts = 0
 		this.reconnectTimer = null
 		this.current = Math.floor(Math.random() * this.session.hosts.length)
-		this.requestBuffer = new RequestBuffer()
+		this.requestBuffer = new RequestBuffer(this)
 		this.pingTimer = null
 		this.startPinger = pingLoop.bind(this)
 
@@ -51,7 +57,10 @@ module.exports = function (logger, inherits, EventEmitter, Client, RequestBuffer
 	}
 
 	Ensemble.prototype._ping = function () {
-		this.send(Ping.instance)
+		if (this.client) {
+			//bypass requestBuffer
+			this.client.send(Ping.instance)
+		}
 	}
 
 	Ensemble.prototype._reconnect = function () {
@@ -102,6 +111,7 @@ module.exports = function (logger, inherits, EventEmitter, Client, RequestBuffer
 		if (!err) {
 			this.session.setWatches()
 			this.startPinger()
+			this.requestBuffer.drain()
 		}
 		this.emit('connect', err)
 	}

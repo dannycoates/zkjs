@@ -7,19 +7,7 @@ module.exports = function (
 	paths,
 	Ensemble,
 	Watcher,
-	Auth,
-	Close,
-	Connect,
-	Create,
-	Delete,
-	Exists,
-	GetACL,
-	GetChildren,
-	GetData,
-	SetACL,
-	SetData,
-	SetWatches,
-	Sync,
+	protocol,
 	defaults) {
 
 	function Session(options) {
@@ -33,11 +21,12 @@ module.exports = function (
 		this.lastZxid = 0
 		this.timeout = options.timeout
 		this.id = 0
-		this.password = Connect.BLANK_PASSWORD
+		this.password = protocol.Connect.BLANK_PASSWORD
 		this.readOnly = options.readOnly
 		this.xid = 1
+		this.expired = false
 		this.credentials = options.credentials || []
-		this.root = options.root || ''
+		this.root = options.root || '/'
 		this.hosts = options.hosts || ['localhost:2181']
 		this.watcher = new Watcher()
 
@@ -55,25 +44,36 @@ module.exports = function (
 	}
 	inherits(Session, EventEmitter)
 
-	Session.createFlags = Create.flags
+	Session.createFlags = protocol.Create.flags
+
+	function noop() {}
 
 	//API
 
 	Session.prototype.start = function (cb) {
-		if (typeof(cb) === 'function') {
-			this.ensemble.once('connect')
-		}
+		this.ensemble.once(
+			'connect',
+			function (err) {
+				this.expired = false
+				if (!err && this.root !== '/') {
+					this.mkdirp('/', cb || noop)
+				}
+				else if (cb) {
+					cb(err)
+				}
+			}.bind(this)
+		)
 		this.ensemble.session = this
 		this.ensemble.connect()
 	}
 
 	Session.prototype.auth = function (id, cb) {
 		assert(id, 'id is required')
-		this._send(new Auth(0, id), cb)
+		this._send(new protocol.Auth(0, id), cb)
 	}
 
 	Session.prototype.close = function () {
-		this._send(Close.instance, this.onClose)
+		this._send(protocol.Close.instance, this.onClose)
 	}
 
 	Session.prototype.create = function (path, data, flags, acls, cb) {
@@ -89,19 +89,19 @@ module.exports = function (
 				if (flags === undefined) {
 					// path, data
 					cb = defaults.create
-					flags = Create.flags.NONE
+					flags = Session.createFlags.NONE
 					acls = null
 				}
 				else if (Array.isArray(flags)) {
 					// path, data, acls
 					cb = defaults.create
 					acls = flags
-					flags = Create.flags.NONE
+					flags = Session.createFlags.NONE
 				}
 				else if (typeof(flags) === 'function') {
 					// path, data, cb
 					cb = flags
-					flags = Create.flags.NONE
+					flags = Session.createFlags.NONE
 					acls = null
 				}
 				else {
@@ -114,7 +114,7 @@ module.exports = function (
 				// path, data, acls, cb
 				acls = flags
 				cb = acls
-				flags = Create.flags.NONE
+				flags = Session.createFlags.NONE
 			}
 			else if (Array.isArray(acls)) {
 				// path, data, flags, acls
@@ -127,7 +127,7 @@ module.exports = function (
 			}
 		}
 		this._send(
-			new Create(this._chroot(path), data, acls, flags, this.xid++),
+			new protocol.Create(this._chroot(path), data, acls, flags, this.xid++),
 			function (err, path) {
 				cb(err, this._unchroot(path))
 			}.bind(this)
@@ -139,7 +139,7 @@ module.exports = function (
 		assert(typeof(version) === 'number', 'version is required')
 
 		cb = cb || defaults.del
-		this._send(new Delete(this._chroot(path), version, this.xid++), cb)
+		this._send(new protocol.Delete(this._chroot(path), version, this.xid++), cb)
 	}
 
 	Session.prototype.exists = function (path, watch, cb) {
@@ -157,7 +157,7 @@ module.exports = function (
 			watch = false
 		}
 		this._send(
-			new Exists(this._chroot(path), watch, this.xid++),
+			new protocol.Exists(this._chroot(path), watch, this.xid++),
 			function (err, exists, stat) {
 				if (!err && watch) {
 					this.watcher.addExistsWatch(path, watch)
@@ -182,7 +182,7 @@ module.exports = function (
 			watch = false
 		}
 		this._send(
-			new GetData(this._chroot(path), watch, this.xid++),
+			new protocol.GetData(this._chroot(path), watch, this.xid++),
 			function (err, data, stat) {
 				if (!err && watch) {
 					this.watcher.addDataWatch(path, watch)
@@ -195,7 +195,10 @@ module.exports = function (
 	Session.prototype.getACL = function (path, cb) {
 		assert(typeof(path) === 'string', 'path is required')
 
-		this._send(new GetACL(this._chroot(path), this.xid++), cb || defaults.getACL)
+		this._send(
+			new protocol.GetACL(this._chroot(path), this.xid++),
+			cb || defaults.getACL
+		)
 	}
 
 	Session.prototype.getChildren = function (path, watch, cb) {
@@ -212,7 +215,7 @@ module.exports = function (
 			watch = false
 		}
 		this._send(
-			new GetChildren(this._chroot(path), watch, this.xid++),
+			new protocol.GetChildren(this._chroot(path), watch, this.xid++),
 			function (err, children, stat) {
 				if (!err && watch) {
 					this.watcher.addChildWatch(path, watch)
@@ -244,6 +247,24 @@ module.exports = function (
 	}
 
 	Session.prototype.rmrf = function (path, cb) {
+		// this.getChildren(
+		// 	path,
+		// 	function (err, children, stat) {
+		// 		if (err) {
+		// 			return cb(err)
+		// 		}
+		// 		if (children.length === 0) {
+		// 			return this.del(path, stat.version, cb)
+		// 		}
+		// 		async.forEachSeries(
+		// 			children,
+		// 			function (child, next) {
+		// 				this.rmrf(path + '/' + child, next)
+		// 			}.bind(this),
+		// 			cb
+		// 		)
+		// 	}.bind(this)
+		// )
 		assert(false, 'Not Implemented')
 	}
 
@@ -256,7 +277,7 @@ module.exports = function (
 			data = new Buffer(data.toString())
 		}
 		this._send(
-			new SetData(this._chroot(path), data, version, this.xid++),
+			new protocol.SetData(this._chroot(path), data, version, this.xid++),
 			cb || defaults.set
 		)
 	}
@@ -266,14 +287,17 @@ module.exports = function (
 		assert(Array.isArray(acls), 'an array of acls is required')
 		assert(typeof(version) === 'number', 'version is required')
 
-		this._send(new SetACL(this._chroot(path), acls, version, this.xid++), cb)
+		this._send(
+			new protocol.SetACL(this._chroot(path), acls, version, this.xid++),
+			cb
+		)
 	}
 
 	Session.prototype.sync = function (path, cb) {
 		assert(typeof(path) === 'string', 'path is required')
 
 		this._send(
-			new Sync(this._chroot(path), this.xid++),
+			new protocol.Sync(this._chroot(path), this.xid++),
 			function (err, path) {
 				cb(err, this._unchroot(path))
 			}.bind(this)
@@ -312,12 +336,12 @@ module.exports = function (
 		if (!path) {
 			return null
 		}
-		return path.substr(this.root.length)
+		return path.substr(this.root.length) || '/'
 	}
 
 	Session.prototype.login = function (cb) {
 		this._send(
-			new Connect(
+			new protocol.Connect(
 				this.lastZxid,
 				this.timeout,
 				this.id,
@@ -331,7 +355,7 @@ module.exports = function (
 	Session.prototype._reset = function () {
 		this.timeout = this.options.timeout
 		this.id = 0
-		this.password = Connect.BLANK_PASSWORD
+		this.password = protocol.Connect.BLANK_PASSWORD
 		this.readOnly = this.options.readOnly
 	}
 
@@ -340,7 +364,7 @@ module.exports = function (
 		this._chain(
 			this.credentials.map(
 				function (id) {
-					return new Auth(0, id)
+					return new protocol.Auth(0, id)
 				}
 			),
 			cb
@@ -356,7 +380,7 @@ module.exports = function (
 					if (err) {
 						return cb(err)
 					}
-					this._chain(requests, cb);
+					this._chain(requests, cb)
 				}.bind(this)
 			)
 		}
@@ -366,7 +390,8 @@ module.exports = function (
 	}
 
 	Session.prototype._send = function (request, cb) {
-			this.ensemble.send(request, cb)
+		assert(!this.expired, 'session has expired')
+		this.ensemble.send(request, cb)
 	}
 
 	Session.prototype.setParameters = function(id, password, timeout, readOnly) {
@@ -386,7 +411,7 @@ module.exports = function (
 				watchPaths.exists = watchPaths.exists.map(chroot)
 
 				this._send(
-					new SetWatches(this.lastZxid, this.watcher.paths()),
+					new protocol.SetWatches(this.lastZxid, this.watcher.paths()),
 					function (err) {
 						logger.info('set-watches error: %s', err)
 					}
@@ -406,6 +431,7 @@ module.exports = function (
 
 	function ensembleExpired() {
 		this._reset()
+		this.expired = true
 		this.emit('expired')
 	}
 
