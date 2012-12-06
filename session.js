@@ -44,10 +44,6 @@ module.exports = function (
 	}
 	inherits(Session, EventEmitter)
 
-	Session.createFlags = protocol.Create.flags
-
-	function noop() {}
-
 	//API
 
 	Session.prototype.start = function (cb) {
@@ -56,13 +52,14 @@ module.exports = function (
 			function (err) {
 				this.expired = false
 				if (!err && this.root !== '/') {
-					this.mkdirp('/', cb || noop)
+					return this.mkdirp('/', this.emit.bind(this, 'started'))
 				}
-				else if (cb) {
-					cb(err)
-				}
+				this.emit('started', err)
 			}.bind(this)
 		)
+		if (cb) {
+			this.once('started', cb)
+		}
 		this.ensemble.session = this
 		this.ensemble.connect()
 	}
@@ -89,19 +86,19 @@ module.exports = function (
 				if (flags === undefined) {
 					// path, data
 					cb = defaults.create
-					flags = Session.createFlags.NONE
+					flags = this.create.NONE
 					acls = null
 				}
 				else if (Array.isArray(flags)) {
 					// path, data, acls
 					cb = defaults.create
 					acls = flags
-					flags = Session.createFlags.NONE
+					flags = this.create.NONE
 				}
 				else if (typeof(flags) === 'function') {
 					// path, data, cb
 					cb = flags
-					flags = Session.createFlags.NONE
+					flags = this.create.NONE
 					acls = null
 				}
 				else {
@@ -114,7 +111,7 @@ module.exports = function (
 				// path, data, acls, cb
 				acls = flags
 				cb = acls
-				flags = Session.createFlags.NONE
+				flags = this.create.NONE
 			}
 			else if (Array.isArray(acls)) {
 				// path, data, flags, acls
@@ -133,6 +130,12 @@ module.exports = function (
 			}.bind(this)
 		)
 	}
+
+	Object.keys(protocol.Create.flags).forEach(
+		function (flag) {
+			Session.prototype.create[flag] = protocol.Create.flags[flag]
+		}
+	)
 
 	Session.prototype.del = function (path, version, cb) {
 		assert(typeof(path) === 'string', 'path is required')

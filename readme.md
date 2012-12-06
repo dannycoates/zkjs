@@ -5,6 +5,7 @@ A js node client for [ZooKeeper](http://zookeeper.apache.org/)
 # Example
 
 ```js
+
 var ZK = require('zkjs')
 
 var zk = new ZK({
@@ -17,7 +18,7 @@ zk.start(function (err) {
 	zk.create(
 		'/foo',
 		'some ephemeral data',
-		ZK.createFlags.EPHEMERAL,
+		ZK.create.EPHEMERAL,
 		function (err, path) {
 			if (!err) {
 				console.log(path, 'was created')
@@ -98,17 +99,17 @@ __Arguments__
 
 * path - path of the new node
 * data - the value to set
-* flags - _optional_ `ZK.createFlags`
+* flags - _optional_ `ZK.create` flags
 * acls - _optional_ array of ACL objects
 * callback(err, path) - returns an Error or the path that was created
 
-__Constants__
+__FLAGS__
 
 ```js
-ZK.createFlags.NONE
-ZK.createFlags.EPHEMERAL
-ZK.createFlags.SEQUENCE
-ZK.createFlags.EPHEMERAL_SEQUENCE
+ZK.create.NONE
+ZK.create.EPHEMERAL
+ZK.create.SEQUENCE
+ZK.create.EPHEMERAL_SEQUENCE
 ```
 
 ### zk.del(path, version, callback)
@@ -202,6 +203,49 @@ __Arguments__
 ### zk.toString()
 
 A string value of the session. For debugging.
+
+### Events
+
+__started__
+
+The session is ready to use... or not.
+
+```js
+zk.on('started', function (err) {
+	if (err) {
+		// well, now what?
+	}
+})
+```
+
+__expired__
+
+The session has expired. Any ephemeral nodes create are gone. You must `start()`
+again before making any other calls or they will throw an Error.
+
+```js
+zk.on('expired', function () {
+	// clean up and reconnect
+	console.log('crap, my ephemeral nodes are gone')
+	zk.start()
+})
+```
+
+### Watch Events
+
+You can listen to watch events globally from the session with these events. The
+event includes the `path` that triggered the watch.
+
+* created
+* deleted
+* changed
+* child
+
+```js
+zk.on('changed', function (path) {
+	console.log('the node at', path, 'changed')
+})
+```
 
 ---
 
