@@ -9,6 +9,7 @@ module.exports = function (
 	function Ensemble(session) {
 		this.session = session
 		this.client = null
+		this.connected = false
 		this.reconnectAttempts = 0
 		this.reconnectTimer = null
 		this.current = Math.floor(Math.random() * this.session.hosts.length)
@@ -50,14 +51,14 @@ module.exports = function (
 	}
 
 	Ensemble.prototype.send = function (message, cb) {
-		if (!this.client) {
+		if (!this.connected) {
 			return this.requestBuffer.push(message, cb)
 		}
 		this.client.send(message, cb)
 	}
 
 	Ensemble.prototype._ping = function () {
-		if (this.client) {
+		if (this.connected) {
 			//bypass requestBuffer
 			this.client.send(Ping.instance)
 		}
@@ -67,7 +68,7 @@ module.exports = function (
 		if (this.reconnectAttempts) {
 			this.reconnectTimer = setTimeout(
 				this.connect.bind(this),
-				exponentialBackoff(this.reconnectAttempts)
+				Math.min(exponentialBackoff(this.reconnectAttempts), 10000)
 			)
 		}
 		else {
@@ -118,6 +119,7 @@ module.exports = function (
 
 	function clientConnect() {
 		logger.info('connected', this.session.hosts[this.current])
+		this.connected = true
 		this.session.login(this.onLogin)
 	}
 
@@ -153,8 +155,11 @@ module.exports = function (
 		clearTimeout(this.pingTimer)
 		this.pingTimer = null
 		this.client = null
+		this.connected = false
 		clearTimeout(this.reconnectTimer)
-		this._reconnect()
+		if (!this.session.closed) {
+			this._reconnect()
+		}
 	}
 
 	return Ensemble

@@ -103,7 +103,7 @@ __Arguments__
 * acls - _optional_ array of ACL objects
 * callback(err, path) - returns an Error or the path that was created
 
-__FLAGS__
+__flags__
 
 ```js
 ZK.create.NONE

@@ -1,6 +1,6 @@
 module.exports = function () {
 	var errors = {
-		RolledBack: 0,
+		OK: 0,
 		System: -1,
 		RuntimeInconsistency: -2,
 		DataInconsistency: -3,

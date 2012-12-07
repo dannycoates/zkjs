@@ -25,6 +25,7 @@ module.exports = function (
 		this.readOnly = options.readOnly
 		this.xid = 1
 		this.expired = false
+		this.closed = false
 		this.credentials = options.credentials || []
 		this.root = options.root || '/'
 		this.hosts = options.hosts || ['localhost:2181']
@@ -61,6 +62,7 @@ module.exports = function (
 			this.once('started', cb)
 		}
 		this.ensemble.session = this
+		this.closed = false
 		this.ensemble.connect()
 	}
 
@@ -401,7 +403,7 @@ module.exports = function (
 		this.id = id
 		this.password = password
 		this.timeout = timeout
-		this.readOnly = readOnly
+		//this.readOnly = readOnly
 	}
 
 	Session.prototype.setWatches = function () {
@@ -429,6 +431,7 @@ module.exports = function (
 	// Event handlers
 
 	function onClose() {
+		this.closed = true
 		this._reset()
 	}
 
@@ -445,6 +448,7 @@ module.exports = function (
 	function ensembleWatch(watch) {
 		watch.path = this._unchroot(watch.path)
 		this.watcher.trigger(watch)
+		logger.info('watch %s', watch)
 		this.emit(watch.toJSON().type.toLowerCase(), watch.path)
 	}
 
