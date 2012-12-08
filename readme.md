@@ -220,6 +220,17 @@ zk.on('started', function (err) {
 })
 ```
 
+__connected__
+
+The session connected to a new ZooKeeper server. This may be emitted more than
+once per session.
+
+__disconnected__
+
+The session disconnected from a ZooKeeper server. This may be emitted more than
+once per session. It is recommended to stop issuing ZooKeeper requests until the
+`connected` event fires.
+
 __expired__
 
 The session has expired. Any ephemeral nodes create are gone. You must `start()`
@@ -255,23 +266,23 @@ zk.on('changed', function (path) {
 
 A set of policies for retrying requests.
 
-### no()
+### ZK.retry.no()
 
 Don't retry.
 
-### once(wait)
+### ZK.retry.once(wait)
 
 Retry once, `wait` milliseconds between requests.
 
-### nTimes(times, wait)
+### ZK.retry.nTimes(times, wait)
 
 Retry n `times`, `wait` milliseconds between requests.
 
-### elapsed(timespan, wait)
+### ZK.retry.elapsed(timespan, wait)
 
 Retry for `timespan` milliseconds, `wait` milliseconds between requests.
 
-### exponential(times, wait, [maxWait])
+### ZK.retry.exponential(times, wait, [maxWait])
 
 Retry n `times`, increasing delay between tries exponentially starting at `wait`
 milliseconds, optionally bounded by `maxWait` milliseconds.

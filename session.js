@@ -43,9 +43,13 @@ module.exports = function (
 		this.onEnsembleZxid = ensembleZxid.bind(this)
 		this.onEnsembleWatch = ensembleWatch.bind(this)
 		this.onEnsembleExpired = ensembleExpired.bind(this)
+		this.onEnsembleConnected = this.emit.bind(this, 'connected')
+		this.onEnsembleDisconnected = this.emit.bind(this, 'disconnected')
 		this.ensemble.on('zxid', this.onEnsembleZxid)
 		this.ensemble.on('watch', this.onEnsembleWatch)
 		this.ensemble.on('expired', this.onEnsembleExpired)
+		this.ensemble.on('connected', this.onEnsembleConnected)
+		this.ensemble.on('disconnected', this.onEnsembleDisconnected)
 
 		this.onClose = onClose.bind(this)
 
@@ -61,7 +65,7 @@ module.exports = function (
 
 	Session.prototype.start = function (cb) {
 		this.ensemble.once(
-			'connect',
+			'connected',
 			function (err) {
 				this.expired = false
 				if (!err && this.root !== '/') {

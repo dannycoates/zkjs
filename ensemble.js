@@ -117,7 +117,7 @@ module.exports = function (
 			logger.info('draining', this.requestBuffer.purgatory.length, 'messages')
 			this.requestBuffer.drain()
 		}
-		this.emit('connect', err)
+		this.emit('connected', err)
 	}
 
 	function clientConnect() {
@@ -159,6 +159,7 @@ module.exports = function (
 		this.pingTimer = null
 		this.client = null
 		this.connected = false
+		this.emit('disconnected')
 		clearTimeout(this.reconnectTimer)
 		if (!this.session.closed) {
 			this._reconnect()
