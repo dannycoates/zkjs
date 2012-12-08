@@ -1,5 +1,6 @@
 module.exports = function () {
 	var errors = {
+		Aborted: 101,
 		OK: 0,
 		System: -1,
 		RuntimeInconsistency: -2,
@@ -34,6 +35,13 @@ module.exports = function () {
 			errorNumbers[errors[name]] = name
 		}
 	)
+
+	ZKErrors.RETRY_DEFAULTS = [
+		errors.Aborted,
+		errors.ConnectionLoss,
+		errors.OperationTimeout,
+		errors.SessionMoved
+	]
 
 	ZKErrors.toError = function (errno) {
 		if (errno === 0) {

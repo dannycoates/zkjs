@@ -4,7 +4,8 @@ module.exports = function (
 	EventEmitter,
 	Client,
 	RequestBuffer,
-	Ping) {
+	Ping,
+	ZKErrors) {
 
 	function Ensemble(session) {
 		this.session = session
@@ -91,11 +92,11 @@ module.exports = function (
 
 	function onLogin(err, timeout, id, password, readOnly) {
 		if (err) {
-			if (err.message === 'expired') {
+			if (err === ZKErrors.SessionExpired) {
 				this.session = null
 				return this.emit('expired')
 			}
-			else if (err.message === 'aborted') {
+			else if (err === ZKErrors.Aborted) {
 				logger.info('connect aborted')
 				return
 			}
@@ -112,6 +113,7 @@ module.exports = function (
 		if (!err) {
 			this.session.setWatches()
 			this.startPinger()
+			logger.info('draining', this.requestBuffer.purgatory.length, 'messages')
 			this.requestBuffer.drain()
 		}
 		this.emit('connect', err)

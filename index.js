@@ -13,12 +13,12 @@ var State = require('./state')(inherits)
 var ZKErrors = require('./protocol/zk-errors')()
 var ACL = require('./acl')(format, crypto)
 var ZnodeStat = require('./protocol/znode-stat')(format, int53)
-var Response = require('./protocol/response')(logger)
+var Response = require('./protocol/response')(logger, ZKErrors)
 
 var protocol = {
 	Auth: require('./protocol/auth')(inherits, Response),
 	Close: require('./protocol/close')(inherits, Response),
-	Connect: require('./protocol/connect')(logger, inherits, Response),
+	Connect: require('./protocol/connect')(logger, inherits, Response, ZKErrors),
 	Create: require('./protocol/create')(logger, inherits, Response, ACL),
 	Delete: require('./protocol/delete')(logger, inherits, Response),
 	Exists: require('./protocol/exists')(logger, inherits, Response, ZKErrors, ZnodeStat),
@@ -57,7 +57,8 @@ var Ensemble = require('./ensemble')(
 	EventEmitter,
 	Client,
 	RequestBuffer,
-	Ping
+	Ping,
+	ZKErrors
 )
 
 var Session = require('./session')(

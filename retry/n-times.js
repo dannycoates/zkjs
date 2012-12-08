@@ -5,10 +5,10 @@ module.exports = function () {
 		this.wait = wait || 1000
 	}
 
-	RetryNTimes.prototype.wrap = function (session, request, cb) {
+	RetryNTimes.prototype.wrap = function (retryOn, session, request, cb) {
 		var retry = { times: this.times, wait: this.wait }
 		function retryNTimes(err) {
-			if (err && retry.times > 0) {
+			if (err && retryOn.indexOf(err) > -1 && retry.times > 0) {
 				console.log('retrying')
 				retry.times--
 				if (retry.wait) {

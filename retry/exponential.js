@@ -10,7 +10,7 @@ module.exports = function () {
 		return wait * Math.random() * Math.pow(2, times)
 	}
 
-	RetryExponential.prototype.wrap = function (session, request, cb) {
+	RetryExponential.prototype.wrap = function (retryOn, session, request, cb) {
 		var retry = {
 			times: this.times,
 			wait: this.wait,
@@ -18,7 +18,7 @@ module.exports = function () {
 			count: 0
 		}
 		function retryExponential(err) {
-			if (err && retry.count < retry.times) {
+			if (err && retryOn.indexOf(err) > -1 && retry.count < retry.times) {
 				console.log('retrying')
 				if (retry.wait) {
 					var wait = Math.min(

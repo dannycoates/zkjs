@@ -1,5 +1,3 @@
-// TODO: set the retryable error types
-
 var retry = {
 	no: require('./no')(),
 	once: require('./once')(),

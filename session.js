@@ -20,6 +20,7 @@ module.exports = function (
 		options.autoResetWatches =
 			options.hasOwnProperty('autoResetWatches') ? options.autoResetWatches : true
 		options.retryPolicy = options.retryPolicy || retry.no()
+		options.retryOn = options.retryOn || ZKErrors.RETRY_DEFAULTS
 
 		this.options = options
 		this.lastZxid = 0
@@ -34,7 +35,9 @@ module.exports = function (
 		this.root = options.root || '/'
 		this.hosts = options.hosts || ['localhost:2181']
 		this.watcher = new Watcher()
+
 		this.retryPolicy = options.retryPolicy
+		this.retryOn = options.retryOn
 
 		this.ensemble = new Ensemble(this)
 		this.onEnsembleZxid = ensembleZxid.bind(this)
@@ -81,7 +84,7 @@ module.exports = function (
 	}
 
 	Session.prototype.close = function () {
-		this._send(protocol.Close.instance, this.onClose)
+		this._send(protocol.Close.instance, retry.no(), this.onClose)
 	}
 
 	Session.prototype.create = function (path, data, flags, acls, cb) {
@@ -363,6 +366,7 @@ module.exports = function (
 				this.password,
 				this.readOnly
 			),
+			retry.no(),
 			cb
 		)
 	}
@@ -404,9 +408,27 @@ module.exports = function (
 		}
 	}
 
-	Session.prototype._send = function (request, cb) {
+	Session.prototype._send = function (request, retryOn, retryPolicy, cb) {
 		assert(!this.expired, 'session has expired')
-		this.ensemble.send(request, this.retryPolicy.wrap(this, request, cb))
+		if (cb === undefined) {
+			if (retryPolicy === undefined) {
+				// request, cb
+				cb = retryOn
+				retryPolicy = this.retryPolicy
+				retryOn = this.retryOn
+			}
+			else if (typeof(retryPolicy) === 'function') {
+				// request, retryPolicy, cb
+				cb = retryPolicy
+				retryPolicy = retryOn
+				retryOn = this.retryOn
+			}
+			else {
+				assert.fail('invalid arguments')
+			}
+		}
+		var retryCallback = retryPolicy.wrap(retryOn, this, request, cb)
+		this.ensemble.send(request, retryCallback)
 	}
 
 	Session.prototype._resend = function (request, cb) {

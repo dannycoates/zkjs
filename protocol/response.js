@@ -1,4 +1,4 @@
-module.exports = function (logger) {
+module.exports = function (logger, ZKErrors) {
 
 	function Response(xid, cb) {
 		this.xid = xid
@@ -7,7 +7,7 @@ module.exports = function (logger) {
 
 	Response.prototype.abort = function () {
 		logger.info('aborted', this.constructor.name)
-		this.cb(new Error('aborted'))
+		this.cb(ZKErrors.Aborted)
 	}
 
 	Response.prototype.parse = function (errno, buffer) {

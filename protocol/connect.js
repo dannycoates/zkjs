@@ -1,4 +1,4 @@
-module.exports = function (logger, inherits, Response) {
+module.exports = function (logger, inherits, Response, ZKErrors) {
 
 
 	var BLANK_PASSWORD = new Buffer(16)
@@ -61,7 +61,7 @@ module.exports = function (logger, inherits, Response) {
 		this.readOnly = buffer.readInt8(buffer.length - 1) === 1
 
 		if (this.timeout <= 0) {
-			err = new Error('expired')
+			err = ZKErrors.SessionExpired
 		}
 		this.cb(err, this.timeout, this.sessionId, this.password, this.readOnly)
 	}

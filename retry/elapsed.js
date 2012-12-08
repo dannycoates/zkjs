@@ -5,11 +5,11 @@ module.exports = function () {
 		this.wait = wait || 1000
 	}
 
-	RetryElapsed.prototype.wrap = function (session, request, cb) {
+	RetryElapsed.prototype.wrap = function (retryOn, session, request, cb) {
 		var end = Date.now() + this.timespan
 		var wait = this.wait
 		function retryElapsed(err) {
-			if (err && Date.now() < end) {
+			if (err && retryOn.indexOf(err) > -1 && Date.now() < end) {
 				console.log('retrying')
 				if (wait) {
 					setTimeout(session._resend.bind(session, request, retryElapsed), wait)

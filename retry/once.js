@@ -4,10 +4,10 @@ module.exports = function () {
 		this.wait = wait || 1000
 	}
 
-	RetryOnce.prototype.wrap = function (session, request, cb) {
+	RetryOnce.prototype.wrap = function (retryOn, session, request, cb) {
 		var wait = this.wait
 		function retryOnce(err) {
-			if (err) {
+			if (err && retryOn.indexOf(err) > -1) {
 				//console.log('retryOnce err:', session.errors.toError(err).message)
 				if (wait > 0) {
 					setTimeout(session._resend.bind(session, request, cb), wait)
