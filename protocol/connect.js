@@ -1,4 +1,4 @@
-module.exports = function (logger, inherits, Response, ZKErrors) {
+module.exports = function (logger, inherits, Response) {
 
 
 	var BLANK_PASSWORD = new Buffer(16)

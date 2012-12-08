@@ -1,4 +1,4 @@
-module.exports = function (logger, inherits, Response, ZKErrors, ZnodeStat) {
+module.exports = function (logger, inherits, Response, ZnodeStat) {
 
 	function SetData(path, data, version, xid) {
 		this.xid = xid
@@ -33,7 +33,7 @@ module.exports = function (logger, inherits, Response, ZKErrors, ZnodeStat) {
 
 	SetDataResponse.prototype.parse = function (errno, buffer) {
 		if (errno) {
-			return this.cb(ZKErrors.toError(errno))
+			return this.cb(errno)
 		}
 		this.znodeStat = ZnodeStat.parse(buffer)
 		this.cb(null, this.znodeStat)

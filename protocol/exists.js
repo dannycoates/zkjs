@@ -33,7 +33,7 @@ module.exports = function (logger, inherits, Response, ZKErrors, ZnodeStat) {
 			return this.cb(null, false)
 		}
 		else if (errno) {
-			return this.cb(ZKErrors.toError(errno))
+			return this.cb(errno)
 		}
 		this.znodeStat = ZnodeStat.parse(buffer)
 		this.cb(null, true, this.znodeStat)

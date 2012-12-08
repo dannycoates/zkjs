@@ -70,12 +70,14 @@ zk.start(function (err) {
 var ZK = require('zkjs')
 
 var zk = new ZK({
-	hosts: ['localhost:2181'], // array of zookeeper instances
-	root: '/',                 // the root path for the session
-	timeout: 120000,           // requested timeout for the session
-	readOnly: false,           // read-only session
-	autoResetWatches: true,    // maintain watches if the zookeeper instance changes
-	credentials: []            // array of credentials to auth the session with
+	hosts: ['localhost:2181'],   // array of zookeeper instances
+	root: '/',                   // the root path for the session
+	timeout: 120000,             // requested timeout for the session
+	readOnly: false,             // allow read-only connections
+	maxReconnectAttempts: 15,    // number of attempts to re-establish a connection
+	retryPolicy: ZK.retry.no()   // default retry policy
+	autoResetWatches: true,      // maintain watches if the zookeeper instance changes
+	credentials: []              // array of credentials to auth the session with
 })
 ```
 
@@ -103,7 +105,7 @@ __Arguments__
 * acls - _optional_ array of ACL objects
 * callback(err, path) - returns an Error or the path that was created
 
-__flags__
+__Flags__
 
 ```js
 ZK.create.NONE
@@ -249,9 +251,58 @@ zk.on('changed', function (path) {
 
 ---
 
-## TODOS
+## ZK.retry
 
-* automatic retry, curator style
+A set of policies for retrying requests.
+
+### no()
+
+Don't retry.
+
+### once(wait)
+
+Retry once, `wait` milliseconds between requests.
+
+### nTimes(times, wait)
+
+Retry n `times`, `wait` milliseconds between requests.
+
+### elapsed(timespan, wait)
+
+Retry for `timespan` milliseconds, `wait` milliseconds between requests.
+
+### exponential(times, wait, [maxWait])
+
+Retry n `times`, increasing delay between tries exponentially starting at `wait`
+milliseconds, optionally bounded by `maxWait` milliseconds.
+
+---
+
+## ZK.ACL
+
+### ZK.ACL.Permissions
+
+* READ
+* WRITE
+* CREATE
+* DELETE
+* ADMIN
+* ALL
+
+### Default ACLs
+
+* ZK.ACL.OPEN
+	* All permissions for anyone
+* ZK.ACL.READ
+	* Read permissions for anyone
+* ZK.ACL.CREATOR
+	* All permissions for the creator
+
+### ZK.ACL.digestAcl(name, password, permissions)
+
+Create a digest ACL with `name`, `password` and `permissions`
+
+---
 
 # License
 

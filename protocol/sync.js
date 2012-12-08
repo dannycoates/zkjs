@@ -1,4 +1,4 @@
-module.exports = function (logger, inherits, Response, ZKErrors) {
+module.exports = function (logger, inherits, Response) {
 
 	function Sync(path, xid) {
 		this.xid = xid
@@ -27,7 +27,7 @@ module.exports = function (logger, inherits, Response, ZKErrors) {
 
 	SyncResponse.prototype.parse = function (errno, buffer) {
 		if (errno) {
-			return this.cb(ZKErrors.toError(errno))
+			return this.cb(errno)
 		}
 		var len = buffer.readInt32BE(0)
 		var path = buffer.toString('utf8', 4, len + 4)

@@ -1,4 +1,4 @@
-module.exports = function (logger, ZKErrors) {
+module.exports = function (logger) {
 
 	function Response(xid, cb) {
 		this.xid = xid
@@ -11,7 +11,7 @@ module.exports = function (logger, ZKErrors) {
 	}
 
 	Response.prototype.parse = function (errno, buffer) {
-		this.cb(ZKErrors.toError(errno))
+		this.cb(errno)
 	}
 
 	return Response

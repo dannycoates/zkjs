@@ -1,4 +1,4 @@
-module.exports = function (logger, inherits, Response, ZKErrors, ZnodeStat) {
+module.exports = function (logger, inherits, Response, ZnodeStat) {
 
 	function GetData(path, watcher, xid) {
 		this.xid = xid
@@ -31,7 +31,7 @@ module.exports = function (logger, inherits, Response, ZKErrors, ZnodeStat) {
 
 	GetDataResponse.prototype.parse = function (errno, buffer) {
 		if (errno) {
-			return this.cb(ZKErrors.toError(errno))
+			return this.cb(errno)
 		}
 		var len = buffer.readInt32BE(0)
 		this.data = buffer.slice(4, len + 4)

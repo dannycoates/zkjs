@@ -1,24 +1,24 @@
 // some default callbacks, useful for repl testing
-module.exports = function (logger) {
+module.exports = function (logger, ZKErrors) {
 	var defaults = {
 		create:
 			function defaultCreate(err, path) {
 				if (err) {
-					return logger.error(err.message)
+					return logger.error(ZKErrors.toError(err).message)
 				}
 				logger.info('created', path)
 			},
 		del:
 			function defaultDel(err) {
 				if (err) {
-					return logger.error(err.message)
+					return logger.error(ZKErrors.toError(err).message)
 				}
 				logger.info('deleted')
 			},
 		exists:
 			function defaultExists(err, exists, stat) {
 				if (err) {
-					return logger.error(err.message)
+					return logger.error(ZKErrors.toError(err).message)
 				}
 				if (!exists) {
 					logger.info('does not exist')
@@ -30,7 +30,7 @@ module.exports = function (logger) {
 		get:
 			function defaultGet(err, data, stat) {
 				if (err) {
-					return logger.error(err.message)
+					return logger.error(ZKErrors.toError(err).message)
 				}
 				logger.info(
 					'length: %d data: %s stat: %s',
@@ -42,7 +42,7 @@ module.exports = function (logger) {
 		getACL:
 			function defaultGetACL(err, acls, stat) {
 				if (err) {
-					return logger.error(err.message)
+					return logger.error(ZKErrors.toError(err).message)
 				}
 				logger.info(
 					'acls: [%s] stat: %s',
@@ -53,7 +53,7 @@ module.exports = function (logger) {
 		getChildren:
 			function defaultGetChildren(err, children, stat) {
 				if (err) {
-					return logger.error(err.message)
+					return logger.error(ZKErrors.toError(err).message)
 				}
 				logger.info(
 					'children: [%s] stat: %s',
@@ -64,7 +64,7 @@ module.exports = function (logger) {
 		set:
 			function defaultSet(err, stat) {
 				if (err) {
-					return logger.error(err.message)
+					return logger.error(ZKErrors.toError(err).message)
 				}
 				logger.info(
 					'set stat: %s',

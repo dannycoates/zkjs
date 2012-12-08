@@ -1,4 +1,4 @@
-module.exports = function (logger, inherits, Response, ZKErrors, ZnodeStat, ACL) {
+module.exports = function (logger, inherits, Response, ZnodeStat, ACL) {
 
 	function GetACL(path, xid) {
 		this.xid = xid
@@ -27,7 +27,7 @@ module.exports = function (logger, inherits, Response, ZKErrors, ZnodeStat, ACL)
 
 	GetACLResponse.prototype.parse = function (errno, buffer) {
 		if (errno) {
-			return this.cb(ZKErrors.toError(errno))
+			return this.cb(errno)
 		}
 		var count = buffer.readInt32BE(0)
 		if (count === -1) {

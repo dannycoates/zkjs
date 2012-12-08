@@ -1,4 +1,4 @@
-module.exports = function (logger, inherits, Response, ZKErrors) {
+module.exports = function (logger, inherits, Response) {
 
 	function SetWatches(zxid, watchPaths) {
 		this.xid = -8
@@ -65,7 +65,7 @@ module.exports = function (logger, inherits, Response, ZKErrors) {
 	inherits(SetWatchesResponse, Response)
 
 	SetWatchesResponse.prototype.parse = function (errno, buffer) {
-		return this.cb(ZKErrors.toError(errno))
+		return this.cb(errno)
 	}
 
 	return SetWatches

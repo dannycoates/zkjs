@@ -5,10 +5,13 @@ module.exports = function (
 	inherits,
 	EventEmitter,
 	paths,
+	ACL,
 	Ensemble,
 	Watcher,
 	protocol,
-	defaults) {
+	defaults,
+	retry,
+	ZKErrors) {
 
 	function Session(options) {
 		options = options || {}
@@ -16,6 +19,7 @@ module.exports = function (
 		options.readOnly = options.readOnly || false
 		options.autoResetWatches =
 			options.hasOwnProperty('autoResetWatches') ? options.autoResetWatches : true
+		options.retryPolicy = options.retryPolicy || retry.no()
 
 		this.options = options
 		this.lastZxid = 0
@@ -30,6 +34,7 @@ module.exports = function (
 		this.root = options.root || '/'
 		this.hosts = options.hosts || ['localhost:2181']
 		this.watcher = new Watcher()
+		this.retryPolicy = options.retryPolicy
 
 		this.ensemble = new Ensemble(this)
 		this.onEnsembleZxid = ensembleZxid.bind(this)
@@ -44,6 +49,10 @@ module.exports = function (
 		EventEmitter.call(this)
 	}
 	inherits(Session, EventEmitter)
+
+	Session.errors = Session.prototype.errors = ZKErrors
+	Session.ACL = Session.prototype.ACL = ACL
+	Session.retry = Session.prototype.retry = retry
 
 	//API
 
@@ -133,6 +142,7 @@ module.exports = function (
 		)
 	}
 
+	Session.create = protocol.Create.flags
 	Object.keys(protocol.Create.flags).forEach(
 		function (flag) {
 			Session.prototype.create[flag] = protocol.Create.flags[flag]
@@ -396,6 +406,10 @@ module.exports = function (
 
 	Session.prototype._send = function (request, cb) {
 		assert(!this.expired, 'session has expired')
+		this.ensemble.send(request, this.retryPolicy.wrap(this, request, cb))
+	}
+
+	Session.prototype._resend = function (request, cb) {
 		this.ensemble.send(request, cb)
 	}
 
