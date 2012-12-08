@@ -358,7 +358,8 @@ module.exports = function (
 	}
 
 	Session.prototype.login = function (cb) {
-		this._send(
+		// Connect skips the send buffer so it uses write instead of send
+		this.ensemble.write(
 			new protocol.Connect(
 				this.lastZxid,
 				this.timeout,
@@ -366,7 +367,6 @@ module.exports = function (
 				this.password,
 				this.readOnly
 			),
-			retry.no(),
 			cb
 		)
 	}

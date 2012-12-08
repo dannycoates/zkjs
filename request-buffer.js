@@ -6,12 +6,15 @@ module.exports = function () {
 
 	RequestBuffer.prototype.push = function (message, cb) {
 		this.purgatory.push([message, cb])
+		this.drain()
 	}
 
 	RequestBuffer.prototype.drain = function () {
-		while (this.purgatory.length > 0) {
-			var messageAndCallback = this.purgatory.shift()
-			this.ensemble.send(messageAndCallback[0], messageAndCallback[1])
+		if (this.ensemble.connected) {
+			while (this.purgatory.length > 0) {
+				var messageAndCallback = this.purgatory.shift()
+				this.ensemble.write(messageAndCallback[0], messageAndCallback[1])
+			}
 		}
 	}
 

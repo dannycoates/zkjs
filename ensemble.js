@@ -52,9 +52,10 @@ module.exports = function (
 	}
 
 	Ensemble.prototype.send = function (message, cb) {
-		if (!this.connected) {
-			return this.requestBuffer.push(message, cb)
-		}
+		return this.requestBuffer.push(message, cb)
+	}
+
+	Ensemble.prototype.write = function (message, cb) {
 		this.client.send(message, cb)
 	}
 
