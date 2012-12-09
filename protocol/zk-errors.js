@@ -1,29 +1,29 @@
 module.exports = function () {
 	var errors = {
-		RequestTimeout: 102,
-		Aborted: 101,
+		REQUESTTIMEOUT: 102,
+		ABORTED: 101,
 		OK: 0,
-		System: -1,
-		RuntimeInconsistency: -2,
-		DataInconsistency: -3,
-		ConnectionLoss: -4,
-		Marshalling: -5,
-		Unimplemented: -6,
-		OperationTimeout: -7,
-		BadArguments: -8,
+		SYSTEM: -1,
+		RUNTIMEINCONSISTENCY: -2,
+		DATAINCONSISTENCY: -3,
+		CONNECTIONLOSS: -4,
+		MARSHALLING: -5,
+		UNIMPLEMENTED: -6,
+		OPERATIONTIMEOUT: -7,
+		BADARGUMENTS: -8,
 		API: -100,
-		NoNode: -101,
-		NoAuth: -102,
-		BadVersion: -103,
-		NoChildrenForEphemerals: -108,
-		NodeExists: -110,
-		NotEmpty: -111,
-		SessionExpired: -112,
-		InvalidCallback: -113,
-		InvalidACL: -114,
-		AuthFailed: -115,
-		SessionMoved: -118,
-		NotReadOnlyCall: -119,
+		NONODE: -101,
+		NOAUTH: -102,
+		BADVERSION: -103,
+		NOCHILDRENFOREPHEMERALS: -108,
+		NODEEXISTS: -110,
+		NOTEMPTY: -111,
+		SESSIONEXPIRED: -112,
+		INVALIDCALLBACK: -113,
+		INVALIDACL: -114,
+		AUTHFAILED: -115,
+		SESSIONMOVED: -118,
+		NOTREADONLYCALL: -119,
 	}
 
 	var errorNumbers = {}
@@ -38,10 +38,10 @@ module.exports = function () {
 	)
 
 	ZKErrors.RETRY_DEFAULTS = [
-		errors.Aborted,
-		errors.ConnectionLoss,
-		errors.OperationTimeout,
-		errors.SessionMoved
+		errors.ABORTED,
+		errors.CONNECTIONLOSS,
+		errors.OPERATIONTIMEOUT,
+		errors.SESSIONMOVED
 	]
 
 	ZKErrors.toError = function (errno) {

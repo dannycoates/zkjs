@@ -29,7 +29,7 @@ module.exports = function (logger, inherits, Response, ZKErrors, ZnodeStat) {
 	inherits(ExistsResponse, Response)
 
 	ExistsResponse.prototype.parse = function (errno, buffer) {
-		if (errno === ZKErrors.NoNode) {
+		if (errno === ZKErrors.NONODE) {
 			return this.cb(null, false)
 		}
 		else if (errno) {

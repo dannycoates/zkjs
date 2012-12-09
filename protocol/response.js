@@ -7,7 +7,7 @@ module.exports = function (logger, ZKErrors) {
 
 	Response.prototype.abort = function () {
 		logger.info('aborted', this.constructor.name)
-		this.cb(ZKErrors.Aborted)
+		this.cb(ZKErrors.ABORTED)
 	}
 
 	Response.prototype.parse = function (errno, buffer) {

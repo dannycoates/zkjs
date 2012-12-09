@@ -93,11 +93,11 @@ module.exports = function (
 
 	function onLogin(err, timeout, id, password, readOnly) {
 		if (err) {
-			if (err === ZKErrors.SessionExpired) {
+			if (err === ZKErrors.SESSIONEXPIRED) {
 				this.session = null
 				return this.emit('expired')
 			}
-			else if (err === ZKErrors.Aborted) {
+			else if (err === ZKErrors.ABORTED) {
 				logger.info('connect aborted')
 				return
 			}

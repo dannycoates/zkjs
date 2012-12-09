@@ -1,11 +1,8 @@
 {
   "name": "zkjs",
-  "version": "3.4.0",
+  "version": "3.4.0beta1",
   "description": "Pure JS Zookeeper Client",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "dependencies": {
     "readable-stream": "*",
     "int53": "*"
