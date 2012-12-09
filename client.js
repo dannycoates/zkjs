@@ -26,15 +26,13 @@ module.exports = function (
 	}
 	inherits(Client, net.Socket)
 
-	Client.prototype.send = function (message, cb) {
+	Client.prototype.send = function (message) {
 		var data = message.toBuffer()
 		var len = Buffer(4)
 		len.writeInt32BE(data.length, 0)
 		this.write(len)
 		this.write(data)
-		if (cb) {
-			this.receiver.push(message, cb)
-		}
+		this.receiver.push(message)
 	}
 
 	function receiverPing() {

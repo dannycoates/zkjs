@@ -1,11 +1,11 @@
-module.exports = function (logger, inherits, Response, ZnodeStat) {
+module.exports = function (logger, inherits, Request, Response, ZnodeStat) {
 
 	function GetChildren(path, watcher, xid) {
-		this.xid = xid
-		this.type = 12
+		Request.call(this, 12, xid)
 		this.path = path
 		this.watcher = watcher ? 1 : 0
 	}
+	inherits(GetChildren, Request)
 
 	GetChildren.prototype.toBuffer = function () {
 		var pathlen = Buffer.byteLength(this.path)
@@ -18,8 +18,8 @@ module.exports = function (logger, inherits, Response, ZnodeStat) {
 		return data
 	}
 
-	GetChildren.prototype.response = function (cb) {
-		return new GetChildrenResponse(this.xid, cb)
+	GetChildren.prototype.response = function () {
+		return new GetChildrenResponse(this.xid, this.responseCallback())
 	}
 
 	function GetChildrenResponse(xid, cb) {

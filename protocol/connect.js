@@ -10,13 +10,15 @@ module.exports = function (logger, inherits, Response, ZKErrors) {
 		timeout,
 		sessionId,
 		password,
-		readOnly) {
+		readOnly,
+		cb) {
 		this.protocolVersion = 0
 		this.lastZxid = lastZxid
 		this.timeout = timeout
 		this.sessionId = sessionId
 		this.password = password || BLANK_PASSWORD
 		this.readOnly = readOnly
+		this._responseCallback = cb
 	}
 
 	ConnectRequest.BLANK_PASSWORD = BLANK_PASSWORD
@@ -34,8 +36,8 @@ module.exports = function (logger, inherits, Response, ZKErrors) {
 		return data
 	}
 
-	ConnectRequest.prototype.response = function (cb) {
-		return new ConnectResponse(cb)
+	ConnectRequest.prototype.response = function () {
+		return new ConnectResponse(this._responseCallback)
 	}
 
 	function ConnectResponse(cb) {

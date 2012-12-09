@@ -1,13 +1,13 @@
-module.exports = function (logger, inherits, Response, ACL) {
+module.exports = function (logger, inherits, Request, Response, ACL) {
 
 	function Create(path, data, acls, flags, xid) {
-		this.xid = xid
-		this.type = 1
+		Request.call(this, 1, xid)
 		this.path = path
 		this.data = data
 		this.acls = acls || ACL.OPEN
 		this.flags = flags
 	}
+	inherits(Create, Request)
 
 	Create.flags = {
 		NONE: 0,
@@ -41,8 +41,8 @@ module.exports = function (logger, inherits, Response, ACL) {
 		return data
 	}
 
-	Create.prototype.response = function (cb) {
-		return new CreateResponse(this.xid, cb)
+	Create.prototype.response = function () {
+		return new CreateResponse(this.xid, this.responseCallback())
 	}
 
 	function CreateResponse(xid, cb) {

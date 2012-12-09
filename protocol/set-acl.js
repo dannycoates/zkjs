@@ -1,12 +1,12 @@
-module.exports = function (logger, inherits, Response, ZnodeStat, ACL) {
+module.exports = function (logger, inherits, Request, Response, ZnodeStat, ACL) {
 
 	function SetACL(path, acls, version, xid) {
-		this.xid = xid
-		this.type = 7
+		SetACL.call(this, 7, xid)
 		this.path = path
 		this.acls = acls || ACL.OPEN
 		this.version = version
 	}
+	inherits(SetACL, Request)
 
 	function acl2buffer(acl) { return acl.toBuffer() }
 	function sumLength(total, buffer) { return total + buffer.length }
@@ -30,8 +30,8 @@ module.exports = function (logger, inherits, Response, ZnodeStat, ACL) {
 		return data
 	}
 
-	SetACL.prototype.response = function (cb) {
-		return new SetACLResponse(this.xid, cb)
+	SetACL.prototype.response = function () {
+		return new SetACLResponse(this.xid, this.responseCallback())
 	}
 
 	function SetACLResponse(xid, cb) {

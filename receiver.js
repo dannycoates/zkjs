@@ -99,9 +99,9 @@ module.exports = function (logger, inherits, EventEmitter, State, Watch) {
 		}
 	}
 
-	Receiver.prototype.push = function (request, cb) {
+	Receiver.prototype.push = function (request) {
 		if (this.closed) { return false } // or something
-		var response = request.response(cb)
+		var response = request.response()
 		if (response) {
 			this.queue.push(response)
 		}

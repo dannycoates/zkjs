@@ -1,4 +1,4 @@
-module.exports = function () {
+module.exports = function (makeTimeoutTimer) {
 
 	function RetryExponential(times, wait, maxWait) {
 		this.times = times || 5
@@ -17,14 +17,7 @@ module.exports = function () {
 			maxWait: this.maxWait,
 			count: 0
 		}
-		var timer = true
-		if (timeout) {
-			function timeoutCallback() {
-				timer = false
-				cb.call(session, 102)
-			}
-			timer = setTimeout(timeoutCallback, timeout)
-		}
+		var timer = makeTimeoutTimer(timeout, session, cb)
 		function retryExponential(err) {
 			if (!timer) {
 				return

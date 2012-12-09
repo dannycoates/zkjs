@@ -1,4 +1,4 @@
-module.exports = function () {
+module.exports = function (makeTimeoutTimer) {
 
 	function RetryNTimes(times, wait) {
 		this.times = times
@@ -7,14 +7,7 @@ module.exports = function () {
 
 	RetryNTimes.prototype.wrap = function (timeout, retryOn, session, request, cb) {
 		var retry = { times: this.times, wait: this.wait }
-		var timer = true
-		if (timeout) {
-			function timeoutCallback() {
-				timer = false
-				cb.call(session, 102)
-			}
-			timer = setTimeout(timeoutCallback, timeout)
-		}
+		var timer = makeTimeoutTimer(timeout, session, cb)
 		function retryNTimes(err) {
 			if (!timer) {
 				return

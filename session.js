@@ -19,7 +19,7 @@ module.exports = function (
 		options.readOnly = options.readOnly || false
 		options.autoResetWatches =
 			options.hasOwnProperty('autoResetWatches') ? options.autoResetWatches : true
-		options.retryPolicy = options.retryPolicy || retry.no()
+		options.retryPolicy = options.retryPolicy || retry.once()
 		options.retryOn = options.retryOn || ZKErrors.RETRY_DEFAULTS
 		if (!options.hasOwnProperty('requestTimeout')) {
 			options.requestTimeout = 30000
@@ -373,9 +373,9 @@ module.exports = function (
 				this.timeout,
 				this.id,
 				this.password,
-				this.readOnly
-			),
-			cb
+				this.readOnly,
+				cb
+			)
 		)
 	}
 

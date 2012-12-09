@@ -1,4 +1,4 @@
-module.exports = function () {
+module.exports = function (makeTimeoutTimer) {
 
 	function RetryElapsed(timespan, wait) {
 		this.timespan = timespan
@@ -8,14 +8,7 @@ module.exports = function () {
 	RetryElapsed.prototype.wrap = function (timeout, retryOn, session, request, cb) {
 		var end = Date.now() + this.timespan
 		var wait = this.wait
-		var timer = true // anything truthy
-		if (timeout) {
-			function timeoutCallback() {
-				timer = false
-				cb.call(session, 102)
-			}
-			timer = setTimeout(timeoutCallback, timeout)
-		}
+		var timer = makeTimeoutTimer(timeout, session, cb)
 		function retryElapsed(err) {
 			if (!timer) {
 				return // we've already timed out

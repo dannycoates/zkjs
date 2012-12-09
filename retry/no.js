@@ -1,15 +1,10 @@
-module.exports = function () {
+module.exports = function (makeTimeoutTimer) {
 
 	function NoRetry() {}
 
 	NoRetry.prototype.wrap = function (timeout, retryOn, session, request, cb) {
 		if (timeout) {
-			function timeoutCallback() {
-				timer = false
-				cb.call(session, 102)
-			}
-			var timer = setTimeout(timeoutCallback, timeout)
-
+			var timer = makeTimeoutTimer(timeout, session, cb)
 			function requestCallback(err) {
 				if (!timer) {
 					return

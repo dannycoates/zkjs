@@ -1,11 +1,11 @@
-module.exports = function (logger, inherits, Response, ZKErrors, ZnodeStat) {
+module.exports = function (logger, inherits, Request, Response, ZKErrors, ZnodeStat) {
 
 	function Exists(path, watcher, xid) {
-		this.xid = xid
-		this.type = 3
+		Request.call(this, 3, xid)
 		this.path = path
 		this.watcher = watcher ? 1 : 0
 	}
+	inherits(Exists, Request)
 
 	Exists.prototype.toBuffer = function () {
 		var pathlen = Buffer.byteLength(this.path)
@@ -18,8 +18,8 @@ module.exports = function (logger, inherits, Response, ZKErrors, ZnodeStat) {
 		return data
 	}
 
-	Exists.prototype.response = function (cb) {
-		return new ExistsResponse(this.xid, cb)
+	Exists.prototype.response = function () {
+		return new ExistsResponse(this.xid, this.responseCallback())
 	}
 
 	function ExistsResponse(xid, cb) {

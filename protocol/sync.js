@@ -1,10 +1,10 @@
-module.exports = function (logger, inherits, Response) {
+module.exports = function (logger, inherits, Request, Response) {
 
 	function Sync(path, xid) {
-		this.xid = xid
-		this.type = 9
+		Request.call(this, 9, xid)
 		this.path = path
 	}
+	inherits(Sync, Request)
 
 	Sync.prototype.toBuffer = function () {
 		var pathlen = Buffer.byteLength(this.path)
@@ -16,8 +16,8 @@ module.exports = function (logger, inherits, Response) {
 		return data
 	}
 
-	Sync.prototype.response = function (cb) {
-		return new SyncResponse(this.xid, cb)
+	Sync.prototype.response = function () {
+		return new SyncResponse(this.xid, this.responseCallback())
 	}
 
 	function SyncResponse(xid, cb) {

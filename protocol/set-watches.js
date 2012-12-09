@@ -1,13 +1,13 @@
-module.exports = function (logger, inherits, Response) {
+module.exports = function (logger, inherits, Request, Response) {
 
 	function SetWatches(zxid, watchPaths) {
-		this.xid = -8
-		this.type = 101
+		Request.call(this, 101, -8)
 		this.zxid = zxid
 		this.childWatches = watchPaths.child
 		this.dataWatches = watchPaths.data
 		this.existsWatches = watchPaths.exists
 	}
+	inherits(SetWatches, Request)
 
 	function string2buffer(string) {
 		var len = Buffer.byteLength(string)
@@ -55,8 +55,8 @@ module.exports = function (logger, inherits, Response) {
 		return data
 	}
 
-	SetWatches.prototype.response = function (cb) {
-		return new SetWatchesResponse(this.xid, cb)
+	SetWatches.prototype.response = function () {
+		return new SetWatchesResponse(this.xid, this.responseCallback())
 	}
 
 	function SetWatchesResponse(xid, cb) {

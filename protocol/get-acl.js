@@ -1,10 +1,10 @@
-module.exports = function (logger, inherits, Response, ZnodeStat, ACL) {
+module.exports = function (logger, inherits, Request, Response, ZnodeStat, ACL) {
 
 	function GetACL(path, xid) {
-		this.xid = xid
-		this.type = 6
+		Request.call(this, 6, xid)
 		this.path = path
 	}
+	inherits(GetACL, Request)
 
 	GetACL.prototype.toBuffer = function () {
 		var pathlen = Buffer.byteLength(this.path)
@@ -16,8 +16,8 @@ module.exports = function (logger, inherits, Response, ZnodeStat, ACL) {
 		return data
 	}
 
-	GetACL.prototype.response = function (cb) {
-		return new GetACLResponse(this.xid, cb)
+	GetACL.prototype.response = function () {
+		return new GetACLResponse(this.xid, this.responseCallback())
 	}
 
 	function GetACLResponse(xid, cb) {

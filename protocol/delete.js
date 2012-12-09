@@ -1,11 +1,11 @@
-module.exports = function (logger, inherits, Response) {
+module.exports = function (logger, inherits, Request, Response) {
 
 	function Delete(path, version, xid) {
-		this.xid = xid
-		this.type = 2
+		Request.call(this, 2, xid)
 		this.path = path
 		this.version = version
 	}
+	inherits(Delete, Request)
 
 	Delete.prototype.toBuffer = function () {
 		var pathlen = Buffer.byteLength(this.path)
@@ -18,8 +18,8 @@ module.exports = function (logger, inherits, Response) {
 		return data
 	}
 
-	Delete.prototype.response = function (cb) {
-		return new DeleteResponse(this.xid, cb)
+	Delete.prototype.response = function () {
+		return new DeleteResponse(this.xid, this.responseCallback())
 	}
 
 	function DeleteResponse(xid, cb) {

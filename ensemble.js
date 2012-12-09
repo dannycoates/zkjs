@@ -52,11 +52,12 @@ module.exports = function (
 	}
 
 	Ensemble.prototype.send = function (message, cb) {
-		return this.requestBuffer.push(message, cb)
+		message.responseCallback(cb)
+		return this.requestBuffer.push(message)
 	}
 
-	Ensemble.prototype.write = function (message, cb) {
-		this.client.send(message, cb)
+	Ensemble.prototype.write = function (message) {
+		this.client.send(message)
 	}
 
 	Ensemble.prototype._ping = function () {

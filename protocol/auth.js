@@ -1,11 +1,11 @@
-module.exports = function (inherits, Response) {
+module.exports = function (inherits, Request, Response) {
 
 	function Auth(authType, id) {
-		this.xid = -4
-		this.type = 100
+		Request.call(this, 100, -4)
 		this.authType = authType
 		this.id = id
 	}
+	inherits(Auth, Request)
 
 	Auth.prototype.toBuffer = function () {
 		var idData = this.id.toBuffer()
@@ -17,8 +17,8 @@ module.exports = function (inherits, Response) {
 		return data
 	}
 
-	Auth.prototype.response = function (cb) {
-		return new AuthResponse(this.xid, cb)
+	Auth.prototype.response = function () {
+		return new AuthResponse(this.xid, this.responseCallback())
 	}
 
 	function AuthResponse(xid, cb) {

@@ -1,12 +1,12 @@
-module.exports = function (logger, inherits, Response, ZnodeStat) {
+module.exports = function (logger, inherits, Request, Response, ZnodeStat) {
 
 	function SetData(path, data, version, xid) {
-		this.xid = xid
-		this.type = 5
+		Request.call(this, 5, xid)
 		this.path = path
 		this.data = data
 		this.version = version
 	}
+	inherits(SetData, Request)
 
 	SetData.prototype.toBuffer = function () {
 		var pathlen = Buffer.byteLength(this.path)
@@ -21,8 +21,8 @@ module.exports = function (logger, inherits, Response, ZnodeStat) {
 		return data
 	}
 
-	SetData.prototype.response = function (cb) {
-		return new SetDataResponse(this.xid, cb)
+	SetData.prototype.response = function () {
+		return new SetDataResponse(this.xid, this.responseCallback())
 	}
 
 	function SetDataResponse(xid, cb) {

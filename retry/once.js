@@ -1,4 +1,4 @@
-module.exports = function () {
+module.exports = function (makeTimeoutTimer) {
 
 	function RetryOnce(wait) {
 		this.wait = wait || 1000
@@ -6,14 +6,7 @@ module.exports = function () {
 
 	RetryOnce.prototype.wrap = function (timeout, retryOn, session, request, cb) {
 		var wait = this.wait
-		var timer = true
-		if (timeout) {
-			function timeoutCallback() {
-				timer = false
-				cb.call(session, 102)
-			}
-			timer = setTimeout(timeoutCallback, timeout)
-		}
+		var timer = makeTimeoutTimer(timeout, session, cb)
 		function retryOnce(err) {
 			if (!timer) {
 				return
