@@ -21,6 +21,9 @@ module.exports = function (
 			options.hasOwnProperty('autoResetWatches') ? options.autoResetWatches : true
 		options.retryPolicy = options.retryPolicy || retry.no()
 		options.retryOn = options.retryOn || ZKErrors.RETRY_DEFAULTS
+		if (!options.hasOwnProperty('requestTimeout')) {
+			options.requestTimeout = 30000
+		}
 
 		this.options = options
 		this.lastZxid = 0
@@ -38,6 +41,7 @@ module.exports = function (
 
 		this.retryPolicy = options.retryPolicy
 		this.retryOn = options.retryOn
+		this.requestTimeout = options.requestTimeout
 
 		this.ensemble = new Ensemble(this)
 		this.onEnsembleZxid = ensembleZxid.bind(this)
@@ -412,26 +416,30 @@ module.exports = function (
 		}
 	}
 
-	Session.prototype._send = function (request, retryOn, retryPolicy, cb) {
+	Session.prototype._send = function (request, retryOn, retryPolicy, timeout, cb) {
 		assert(!this.expired, 'session has expired')
 		if (cb === undefined) {
-			if (retryPolicy === undefined) {
-				// request, cb
-				cb = retryOn
-				retryPolicy = this.retryPolicy
-				retryOn = this.retryOn
-			}
-			else if (typeof(retryPolicy) === 'function') {
-				// request, retryPolicy, cb
-				cb = retryPolicy
-				retryPolicy = retryOn
-				retryOn = this.retryOn
+			if (timeout === undefined) {
+				if (retryPolicy === undefined) {
+					// request, cb
+					cb = retryOn
+					timeout = this.requestTimeout
+					retryPolicy = this.retryPolicy
+					retryOn = this.retryOn
+				}
+				else if (typeof(retryPolicy) === 'function') {
+					// request, retryPolicy, cb
+					cb = retryPolicy
+					retryPolicy = retryOn
+					retryOn = this.retryOn
+					timeout = this.requestTimeout
+				}
 			}
 			else {
 				assert.fail('invalid arguments')
 			}
 		}
-		var retryCallback = retryPolicy.wrap(retryOn, this, request, cb)
+		var retryCallback = retryPolicy.wrap(timeout, retryOn, this, request, cb)
 		this.ensemble.send(request, retryCallback)
 	}
 

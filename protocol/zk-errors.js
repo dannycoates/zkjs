@@ -1,5 +1,6 @@
 module.exports = function () {
 	var errors = {
+		RequestTimeout: 102,
 		Aborted: 101,
 		OK: 0,
 		System: -1,

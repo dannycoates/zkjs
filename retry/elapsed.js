@@ -5,10 +5,21 @@ module.exports = function () {
 		this.wait = wait || 1000
 	}
 
-	RetryElapsed.prototype.wrap = function (retryOn, session, request, cb) {
+	RetryElapsed.prototype.wrap = function (timeout, retryOn, session, request, cb) {
 		var end = Date.now() + this.timespan
 		var wait = this.wait
+		var timer = true // anything truthy
+		if (timeout) {
+			function timeoutCallback() {
+				timer = false
+				cb.call(session, 102)
+			}
+			timer = setTimeout(timeoutCallback, timeout)
+		}
 		function retryElapsed(err) {
+			if (!timer) {
+				return // we've already timed out
+			}
 			if (err && retryOn.indexOf(err) > -1 && Date.now() < end) {
 				console.log('retrying')
 				if (wait) {
@@ -19,6 +30,7 @@ module.exports = function () {
 				}
 			}
 			else {
+				clearTimout(timer)
 				var args = Array.prototype.slice.apply(arguments)
 				cb.apply(session, args)
 			}

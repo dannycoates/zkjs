@@ -70,14 +70,16 @@ zk.start(function (err) {
 var ZK = require('zkjs')
 
 var zk = new ZK({
-	hosts: ['localhost:2181'],   // array of zookeeper instances
-	root: '/',                   // the root path for the session
-	timeout: 120000,             // requested timeout for the session
-	readOnly: false,             // allow read-only connections
-	maxReconnectAttempts: 15,    // number of attempts to re-establish a connection
-	retryPolicy: ZK.retry.no()   // default retry policy
-	autoResetWatches: true,      // maintain watches if the zookeeper instance changes
-	credentials: []              // array of credentials to auth the session with
+	hosts: ['localhost:2181'],        // array of zookeeper instances
+	root: '/',                        // the root path for the session
+	readOnly: false,                  // allow read-only connections
+	timeout: 120000,                  // requested timeout for the session
+	requestTimeout: 30000,            // milliseconds before timing out a zk request
+	maxReconnectAttempts: 15,         // number of attempts to re-establish a connection
+	retryPolicy: ZK.retry.no()        // default retry policy
+	retryOn: ZK.errors.RETRY_DEFAULTS,// array of error codes to automatically retry
+	autoResetWatches: true,           // maintain watches if the zookeeper instance changes
+	credentials: []                   // array of credentials to auth the session with
 })
 ```
 

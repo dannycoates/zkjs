@@ -10,14 +10,25 @@ module.exports = function () {
 		return wait * Math.random() * Math.pow(2, times)
 	}
 
-	RetryExponential.prototype.wrap = function (retryOn, session, request, cb) {
+	RetryExponential.prototype.wrap = function (timeout, retryOn, session, request, cb) {
 		var retry = {
 			times: this.times,
 			wait: this.wait,
 			maxWait: this.maxWait,
 			count: 0
 		}
+		var timer = true
+		if (timeout) {
+			function timeoutCallback() {
+				timer = false
+				cb.call(session, 102)
+			}
+			timer = setTimeout(timeoutCallback, timeout)
+		}
 		function retryExponential(err) {
+			if (!timer) {
+				return
+			}
 			if (err && retryOn.indexOf(err) > -1 && retry.count < retry.times) {
 				console.log('retrying')
 				if (retry.wait) {
@@ -35,6 +46,7 @@ module.exports = function () {
 				}
 			}
 			else {
+				clearTimeout(timer)
 				var args = Array.prototype.slice.apply(arguments)
 				cb.apply(session, args)
 			}
