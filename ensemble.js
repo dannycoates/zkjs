@@ -17,6 +17,7 @@ module.exports = function (
 		this.requestBuffer = new RequestBuffer(this)
 		this.pingTimer = null
 		this.startPinger = pingLoop.bind(this)
+		this.maxReconnectAttmpts = session.maxReconnectAttmpts
 
 		this.onClientConnect = clientConnect.bind(this)
 		this.onClientEnd = clientEnd.bind(this)
@@ -68,6 +69,9 @@ module.exports = function (
 	}
 
 	Ensemble.prototype._reconnect = function () {
+		if (this.reconnectAttempts > this.maxReconnectAttmpts) {
+			return this.emit('maxReconnectAttempts')
+		}
 		if (this.reconnectAttempts) {
 			this.reconnectTimer = setTimeout(
 				this.connect.bind(this),

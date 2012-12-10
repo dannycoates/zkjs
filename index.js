@@ -1,4 +1,3 @@
-var logger = console
 var assert = require('assert')
 var crypto = require('crypto')
 var format = require('util').format
@@ -9,73 +8,98 @@ var path = require('path')
 var ReadableStream = require('readable-stream')
 var int53 = require('int53')
 
-var State = require('./state')(inherits)
-var ZKErrors = require('./protocol/zk-errors')()
-var ACL = require('./acl')(format, crypto)
-var ZnodeStat = require('./protocol/znode-stat')(format, int53)
-var Request = require('./protocol/request')(logger)
-var Response = require('./protocol/response')(logger, ZKErrors)
+var noop = function () {}
+var nullLogger = {}
+Object.keys(console).forEach(function (f) { nullLogger[f] = noop })
 
-var protocol = {
-	Auth: require('./protocol/auth')(inherits, Request, Response),
-	Close: require('./protocol/close')(inherits, Request, Response),
-	Connect: require('./protocol/connect')(logger, inherits, Response, ZKErrors),
-	Create: require('./protocol/create')(logger, inherits, Request, Response, ACL),
-	Delete: require('./protocol/delete')(logger, inherits, Request, Response),
-	Exists: require('./protocol/exists')(logger, inherits, Request, Response, ZKErrors, ZnodeStat),
-	GetACL: require('./protocol/get-acl')(logger, inherits, Request, Response, ZnodeStat, ACL),
-	GetChildren: require('./protocol/get-children')(logger, inherits, Request, Response, ZnodeStat),
-	GetData: require('./protocol/get-data')(logger, inherits, Request, Response, ZnodeStat),
-	SetACL: require('./protocol/set-acl')(logger, inherits, Request, Response, ZnodeStat, ACL),
-	SetData: require('./protocol/set-data')(logger, inherits, Request, Response, ZnodeStat),
-	SetWatches: require('./protocol/set-watches')(logger, inherits, Request, Response),
-	Sync: require('./protocol/sync')(logger, inherits, Request, Response)
+function setLogger(logger) {
+	if (logger) {
+		var required = Object.keys(console)
+		assert.ok(
+			required.every(
+				function (f) {
+					return typeof(logger[f] === 'function')
+				}
+			),
+			'logger must implement the global.console interface'
+		)
+		return logger
+	}
+	else {
+		return nullLogger
+	}
 }
 
-var defaults = require('./default-callbacks')(logger, ZKErrors)
+module.exports = function (options) {
+	var logger = setLogger(options.logger)
+	var State = require('./state')(inherits)
+	var ZKErrors = require('./protocol/zk-errors')()
+	var ACL = require('./acl')(format, crypto)
+	var ZnodeStat = require('./protocol/znode-stat')(format, int53)
+	var Request = require('./protocol/request')(logger)
+	var Response = require('./protocol/response')(logger, ZKErrors)
 
-var Ping = require('./protocol/ping')(inherits, Request)
-var Watch = require('./protocol/watch')(format)
+	var protocol = {
+		Auth: require('./protocol/auth')(inherits, Request, Response),
+		Close: require('./protocol/close')(inherits, Request, Response),
+		Connect: require('./protocol/connect')(logger, inherits, Response, ZKErrors),
+		Create: require('./protocol/create')(logger, inherits, Request, Response, ACL),
+		Delete: require('./protocol/delete')(logger, inherits, Request, Response),
+		Exists: require('./protocol/exists')(logger, inherits, Request, Response, ZKErrors, ZnodeStat),
+		GetACL: require('./protocol/get-acl')(logger, inherits, Request, Response, ZnodeStat, ACL),
+		GetChildren: require('./protocol/get-children')(logger, inherits, Request, Response, ZnodeStat),
+		GetData: require('./protocol/get-data')(logger, inherits, Request, Response, ZnodeStat),
+		SetACL: require('./protocol/set-acl')(logger, inherits, Request, Response, ZnodeStat, ACL),
+		SetData: require('./protocol/set-data')(logger, inherits, Request, Response, ZnodeStat),
+		SetWatches: require('./protocol/set-watches')(logger, inherits, Request, Response),
+		Sync: require('./protocol/sync')(logger, inherits, Request, Response)
+	}
 
-var Receiver = require('./receiver')(logger, inherits, EventEmitter, State, Watch)
-var RequestBuffer = require('./request-buffer')()
-var Watcher = require('./watcher')(logger, Watch)
+	var defaults = require('./default-callbacks')(logger, ZKErrors)
 
-var retry = require('./retry')
+	var Ping = require('./protocol/ping')(inherits, Request)
+	var Watch = require('./protocol/watch')(format)
 
-var Client = require('./client')(
-	logger,
-	inherits,
-	EventEmitter,
-	net,
-	ReadableStream,
-	Receiver
-)
+	var Receiver = require('./receiver')(logger, inherits, EventEmitter, State, Watch)
+	var RequestBuffer = require('./request-buffer')()
+	var Watcher = require('./watcher')(logger, Watch)
 
-var Ensemble = require('./ensemble')(
-	logger,
-	inherits,
-	EventEmitter,
-	Client,
-	RequestBuffer,
-	Ping,
-	ZKErrors
-)
+	var retry = require('./retry')
 
-var Session = require('./session')(
-	logger,
-	assert,
-	format,
-	inherits,
-	EventEmitter,
-	path,
-	ACL,
-	Ensemble,
-	Watcher,
-	protocol,
-	defaults,
-	retry,
-	ZKErrors
-)
+	var Client = require('./client')(
+		logger,
+		inherits,
+		EventEmitter,
+		net,
+		ReadableStream,
+		Receiver
+	)
 
-module.exports = Session
+	var Ensemble = require('./ensemble')(
+		logger,
+		inherits,
+		EventEmitter,
+		Client,
+		RequestBuffer,
+		Ping,
+		ZKErrors
+	)
+
+	var Session = require('./session')(
+		logger,
+		assert,
+		format,
+		inherits,
+		EventEmitter,
+		path,
+		ACL,
+		Ensemble,
+		Watcher,
+		protocol,
+		defaults,
+		retry,
+		ZKErrors
+	)
+
+	return new Session(options)
+}

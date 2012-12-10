@@ -2,7 +2,8 @@ var ZK = require('./index')
 
 var zk = new ZK({
 	hosts: ['localhost:2181', 'localhost:2182', 'localhost:2183'],
-	readOnly: true
+	readOnly: true,
+	logger: console
 })
 
 zk.start()

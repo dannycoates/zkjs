@@ -80,6 +80,7 @@ var zk = new ZK({
 	retryOn: ZK.errors.RETRY_DEFAULTS,// array of error codes to automatically retry
 	autoResetWatches: true,           // maintain watches if the zookeeper instance changes
 	credentials: []                   // array of credentials to auth the session with
+	logger: null                      // an object that implements the 'global.console' interface (for debugging)
 })
 ```
 
@@ -245,6 +246,10 @@ zk.on('expired', function () {
 	zk.start()
 })
 ```
+
+__maxReconnectAttempts__
+
+This fires when the connection to ZooKeeper could not be restored after `options.maxReconnectAttempts` tries.
 
 ### Watch Events
 

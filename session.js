@@ -24,6 +24,9 @@ module.exports = function (
 		if (!options.hasOwnProperty('requestTimeout')) {
 			options.requestTimeout = 30000
 		}
+		if (!options.hasOwnProperty('maxReconnectAttepts')) {
+			options.maxReconnectAttepts = 15
+		}
 
 		this.options = options
 		this.lastZxid = 0
@@ -42,6 +45,7 @@ module.exports = function (
 		this.retryPolicy = options.retryPolicy
 		this.retryOn = options.retryOn
 		this.requestTimeout = options.requestTimeout
+		this.maxReconnectAttepts = options.maxReconnectAttepts
 
 		this.ensemble = new Ensemble(this)
 		this.onEnsembleZxid = ensembleZxid.bind(this)
@@ -49,11 +53,13 @@ module.exports = function (
 		this.onEnsembleExpired = ensembleExpired.bind(this)
 		this.onEnsembleConnected = this.emit.bind(this, 'connected')
 		this.onEnsembleDisconnected = this.emit.bind(this, 'disconnected')
+		this.onEnsembleMaxReconnectAttempts = this.emit.bind(this, 'maxReconnectAttepts')
 		this.ensemble.on('zxid', this.onEnsembleZxid)
 		this.ensemble.on('watch', this.onEnsembleWatch)
 		this.ensemble.on('expired', this.onEnsembleExpired)
 		this.ensemble.on('connected', this.onEnsembleConnected)
 		this.ensemble.on('disconnected', this.onEnsembleDisconnected)
+		this.ensemble.on('maxReconnectAttepts', this.onEnsembleMaxReconnectAttempts)
 
 		this.onClose = onClose.bind(this)
 
