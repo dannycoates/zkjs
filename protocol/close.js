@@ -1,7 +1,7 @@
 module.exports = function (inherits, Request, Response) {
 
 	function Close() {
-		Request.call(this, -11, -11)
+		Request.call(this, -11, -11, CloseResponse)
 		this.data = new Buffer(8)
 		this.data.writeInt32BE(this.xid, 0)
 		this.data.writeInt32BE(this.type, 4)
@@ -10,10 +10,6 @@ module.exports = function (inherits, Request, Response) {
 
 	Close.prototype.toBuffer = function () {
 		return this.data
-	}
-
-	Close.prototype.response = function () {
-		return new CloseResponse(this.xid, this.responseCallback())
 	}
 
 	Close.instance = new Close()

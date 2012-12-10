@@ -1,7 +1,7 @@
 module.exports = function (logger, inherits, Request, Response, ACL) {
 
 	function Create(path, data, acls, flags, xid) {
-		Request.call(this, 1, xid)
+		Request.call(this, 1, xid, CreateResponse)
 		this.path = path
 		this.data = data
 		this.acls = acls || ACL.OPEN
@@ -39,10 +39,6 @@ module.exports = function (logger, inherits, Request, Response, ACL) {
 		}
 		data.writeInt32BE(this.flags, data.length - 4)
 		return data
-	}
-
-	Create.prototype.response = function () {
-		return new CreateResponse(this.xid, this.responseCallback())
 	}
 
 	function CreateResponse(xid, cb) {

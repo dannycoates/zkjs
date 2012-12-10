@@ -1,7 +1,7 @@
 module.exports = function (logger, inherits, Request, Response) {
 
 	function Delete(path, version, xid) {
-		Request.call(this, 2, xid)
+		Request.call(this, 2, xid, DeleteResponse)
 		this.path = path
 		this.version = version
 	}
@@ -16,10 +16,6 @@ module.exports = function (logger, inherits, Request, Response) {
 		data.write(this.path, 12)
 		data.writeInt32BE(this.version, data.length - 4)
 		return data
-	}
-
-	Delete.prototype.response = function () {
-		return new DeleteResponse(this.xid, this.responseCallback())
 	}
 
 	function DeleteResponse(xid, cb) {

@@ -1,7 +1,7 @@
 module.exports = function (logger, inherits, Request, Response) {
 
 	function Sync(path, xid) {
-		Request.call(this, 9, xid)
+		Request.call(this, 9, xid, SyncResponse)
 		this.path = path
 	}
 	inherits(Sync, Request)
@@ -14,10 +14,6 @@ module.exports = function (logger, inherits, Request, Response) {
 		data.writeInt32BE(pathlen, 8)
 		data.write(this.path, 12)
 		return data
-	}
-
-	Sync.prototype.response = function () {
-		return new SyncResponse(this.xid, this.responseCallback())
 	}
 
 	function SyncResponse(xid, cb) {

@@ -1,7 +1,7 @@
 module.exports = function (logger, inherits, Request, Response, ZnodeStat) {
 
 	function SetData(path, data, version, xid) {
-		Request.call(this, 5, xid)
+		Request.call(this, 5, xid, SetDataResponse)
 		this.path = path
 		this.data = data
 		this.version = version
@@ -19,10 +19,6 @@ module.exports = function (logger, inherits, Request, Response, ZnodeStat) {
 		this.data.copy(data, 16 + pathlen)
 		data.writeInt32BE(this.version, data.length - 4)
 		return data
-	}
-
-	SetData.prototype.response = function () {
-		return new SetDataResponse(this.xid, this.responseCallback())
 	}
 
 	function SetDataResponse(xid, cb) {

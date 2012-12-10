@@ -1,7 +1,7 @@
 module.exports = function (logger, inherits, Request, Response) {
 
 	function SetWatches(zxid, watchPaths) {
-		Request.call(this, 101, -8)
+		Request.call(this, 101, -8, SetWatchesResponse)
 		this.zxid = zxid
 		this.childWatches = watchPaths.child
 		this.dataWatches = watchPaths.data
@@ -53,10 +53,6 @@ module.exports = function (logger, inherits, Request, Response) {
 		x += 4
 		writeBuffers(data, childBuffers, x)
 		return data
-	}
-
-	SetWatches.prototype.response = function () {
-		return new SetWatchesResponse(this.xid, this.responseCallback())
 	}
 
 	function SetWatchesResponse(xid, cb) {

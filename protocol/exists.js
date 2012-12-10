@@ -1,7 +1,7 @@
 module.exports = function (logger, inherits, Request, Response, ZKErrors, ZnodeStat) {
 
 	function Exists(path, watcher, xid) {
-		Request.call(this, 3, xid)
+		Request.call(this, 3, xid, ExistsResponse)
 		this.path = path
 		this.watcher = watcher ? 1 : 0
 	}
@@ -16,10 +16,6 @@ module.exports = function (logger, inherits, Request, Response, ZKErrors, ZnodeS
 		data.write(this.path, 12)
 		data.writeUInt8(this.watcher, data.length - 1)
 		return data
-	}
-
-	Exists.prototype.response = function () {
-		return new ExistsResponse(this.xid, this.responseCallback())
 	}
 
 	function ExistsResponse(xid, cb) {

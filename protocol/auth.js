@@ -1,7 +1,7 @@
 module.exports = function (inherits, Request, Response) {
 
 	function Auth(authType, id) {
-		Request.call(this, 100, -4)
+		Request.call(this, 100, -4, AuthResponse)
 		this.authType = authType
 		this.id = id
 	}
@@ -15,10 +15,6 @@ module.exports = function (inherits, Request, Response) {
 		data.writeInt32BE(this.authType, 8)
 		idData.copy(data, 12)
 		return data
-	}
-
-	Auth.prototype.response = function () {
-		return new AuthResponse(this.xid, this.responseCallback())
 	}
 
 	function AuthResponse(xid, cb) {

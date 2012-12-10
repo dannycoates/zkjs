@@ -1,7 +1,7 @@
 module.exports = function (logger, inherits, Request, Response, ZnodeStat) {
 
 	function GetChildren(path, watcher, xid) {
-		Request.call(this, 12, xid)
+		Request.call(this, 12, xid, GetChildrenResponse)
 		this.path = path
 		this.watcher = watcher ? 1 : 0
 	}
@@ -16,10 +16,6 @@ module.exports = function (logger, inherits, Request, Response, ZnodeStat) {
 		data.write(this.path, 12)
 		data.writeUInt8(this.watcher, data.length - 1)
 		return data
-	}
-
-	GetChildren.prototype.response = function () {
-		return new GetChildrenResponse(this.xid, this.responseCallback())
 	}
 
 	function GetChildrenResponse(xid, cb) {

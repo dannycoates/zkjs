@@ -1,7 +1,7 @@
 module.exports = function (logger, inherits, Request, Response, ZnodeStat, ACL) {
 
 	function SetACL(path, acls, version, xid) {
-		SetACL.call(this, 7, xid)
+		SetACL.call(this, 7, xid, SetACLResponse)
 		this.path = path
 		this.acls = acls || ACL.OPEN
 		this.version = version
@@ -28,10 +28,6 @@ module.exports = function (logger, inherits, Request, Response, ZnodeStat, ACL) 
 		}
 		data.writeInt32BE(this.version, data.length - 4)
 		return data
-	}
-
-	SetACL.prototype.response = function () {
-		return new SetACLResponse(this.xid, this.responseCallback())
 	}
 
 	function SetACLResponse(xid, cb) {
