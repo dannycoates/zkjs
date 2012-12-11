@@ -28,9 +28,18 @@ module.exports = function (
 
 	Client.prototype.send = function (message) {
 		var data = message.toBuffer()
-		var len = Buffer(4)
-		len.writeInt32BE(data.length, 0)
-		this.write(len)
+		var head = Buffer(12)
+		var extra = 0
+		if (message.xid) {
+			extra += 4
+			head.writeInt32BE(message.xid, 4)
+		}
+		if (message.type) {
+			extra += 4
+			head.writeInt32BE(message.type, 8)
+		}
+		head.writeInt32BE(data.length + extra, 0)
+		this.write(head.slice(0, extra + 4))
 		this.write(data)
 		this.receiver.push(message)
 	}

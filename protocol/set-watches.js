@@ -1,7 +1,7 @@
 module.exports = function (logger, inherits, Request, Response) {
 
 	function SetWatches(zxid, watchPaths) {
-		Request.call(this, 101, -8, SetWatchesResponse)
+		Request.call(this, Request.types.SETWATCHES, -8, SetWatchesResponse)
 		this.zxid = zxid
 		this.childWatches = watchPaths.child
 		this.dataWatches = watchPaths.data
@@ -39,12 +39,10 @@ module.exports = function (logger, inherits, Request, Response) {
 		var dataLength = dataBuffers.reduce(sumLength, 0)
 		var existsLength = existsBuffers.reduce(sumLength, 0)
 
-		var data = new Buffer(4 + 4 + 8 + 4 + dataLength + 4 + existsLength + 4 + childLength)
-		data.writeInt32BE(this.xid, 0)
-		data.writeInt32BE(this.type, 4)
-		data.writeDoubleBE(this.zxid, 8)
-		data.writeInt32BE(dataBuffers.length, 16)
-		var x = 20
+		var data = new Buffer(8 + 4 + dataLength + 4 + existsLength + 4 + childLength)
+		data.writeDoubleBE(this.zxid, 0)
+		data.writeInt32BE(dataBuffers.length, 8)
+		var x = 12
 		x = writeBuffers(data, dataBuffers, x)
 		data.writeInt32BE(existsBuffers.length, x)
 		x += 4

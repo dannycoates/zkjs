@@ -12,11 +12,12 @@ zk.once('started',
 	function () {
 		console.log('connected')
 
-		setInterval(
-			function () {
-				zk.exists('/foo')
-			},
-			500
-		)
+		zk.exists('/foo')
+		zk.getChildren('/')
+		zk.get('/foo')
+		zk.set('/foo', 'test', 0)
+		zk.del('/foo', 1)
+		zk.exists('/foo')
+		zk.close()
 	}
 )
