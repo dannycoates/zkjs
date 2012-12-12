@@ -1,18 +1,16 @@
 module.exports = function (logger, inherits, Request, Response, ZnodeStat, ACL) {
 
 	function GetACL(path, xid) {
-		Request.call(this, 6, xid, GetACLResponse)
+		Request.call(this, Request.types.GETACL, xid, GetACLResponse)
 		this.path = path
 	}
 	inherits(GetACL, Request)
 
 	GetACL.prototype.toBuffer = function () {
 		var pathlen = Buffer.byteLength(this.path)
-		var data = new Buffer(4 + 4 + 4 + pathlen)
-		data.writeInt32BE(this.xid, 0)
-		data.writeInt32BE(this.type, 4)
-		data.writeInt32BE(pathlen, 8)
-		data.write(this.path, 12)
+		var data = new Buffer(4 + pathlen)
+		data.writeInt32BE(pathlen, 0)
+		data.write(this.path, 4)
 		return data
 	}
 

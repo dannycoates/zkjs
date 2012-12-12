@@ -70,6 +70,16 @@ module.exports = function (logger, ZKErrors) {
 					'set stat: %s',
 					stat
 				)
+			},
+		transaction:
+			function defaultTransaction(err, results) {
+				if (err) {
+					return logger.error(ZKErrors.toError(err).message)
+				}
+				logger.info(
+					'transaction: %s',
+					results
+				)
 			}
 	}
 

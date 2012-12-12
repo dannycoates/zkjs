@@ -105,9 +105,6 @@ module.exports = function (
 		assert(typeof(path) === 'string', 'path is required')
 		assert(data !== undefined, 'data is required')
 
-		if(!Buffer.isBuffer(data)) {
-			data = new Buffer(data.toString())
-		}
 		//optional parameter shenanigans
 		if (cb === undefined) {
 			if (acls === undefined) {
@@ -305,9 +302,6 @@ module.exports = function (
 		assert(data !== undefined, 'data is required')
 		assert(typeof(version) === 'number', 'version is required')
 
-		if (!Buffer.isBuffer(data)) {
-			data = new Buffer(data.toString())
-		}
 		this._send(
 			new protocol.SetData(this._chroot(path), data, version, this.xid++),
 			cb || defaults.set
@@ -334,6 +328,10 @@ module.exports = function (
 				cb(err, this._unchroot(path))
 			}.bind(this)
 		)
+	}
+
+	Session.prototype.transaction = function () {
+		return new protocol.Transaction(this)
 	}
 
 	Session.prototype.toString = function () {
@@ -391,7 +389,6 @@ module.exports = function (
 		this.password = protocol.Connect.BLANK_PASSWORD
 		this.readOnly = this.options.readOnly
 	}
-
 
 	Session.prototype.sendCredentials = function (cb) {
 		this._chain(

@@ -1,5 +1,6 @@
 module.exports = function () {
 	var errors = {
+		ROLLEDBACK: 103,
 		REQUESTTIMEOUT: 102,
 		ABORTED: 101,
 		OK: 0,

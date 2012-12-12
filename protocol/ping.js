@@ -1,10 +1,8 @@
 module.exports = function (inherits, Request) {
 
 	function Ping() {
-		Request.call(this, 11, 0)
-		this.data = new Buffer(8)
-		this.data.writeInt32BE(this.xid, 0)
-		this.data.writeInt32BE(this.type, 4)
+		Request.call(this, Request.types.PING, -2)
+		this.data = new Buffer(0)
 	}
 	inherits(Ping, Request)
 

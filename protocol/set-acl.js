@@ -1,7 +1,7 @@
 module.exports = function (logger, inherits, Request, Response, ZnodeStat, ACL) {
 
 	function SetACL(path, acls, version, xid) {
-		SetACL.call(this, 7, xid, SetACLResponse)
+		SetACL.call(this, Request.types.SETACL, xid, SetACLResponse)
 		this.path = path
 		this.acls = acls || ACL.OPEN
 		this.version = version
@@ -15,11 +15,9 @@ module.exports = function (logger, inherits, Request, Response, ZnodeStat, ACL) 
 		var pathlen = Buffer.byteLength(this.path)
 		var aclsBuffers = this.acls.map(acl2buffer)
 		var aclslen = aclsBuffers.reduce(sumLength, 0)
-		var data = new Buffer(4 + 4 + 4 + pathlen + 4 + aclslen + 4)
-		data.writeInt32BE(this.xid, 0)
-		data.writeInt32BE(this.type, 4)
-		data.writeInt32BE(pathlen, 8)
-		data.write(this.path, 12)
+		var data = new Buffer(4 + pathlen + 4 + aclslen + 4)
+		data.writeInt32BE(pathlen, 0)
+		data.write(this.path, 4)
 		data.writeInt32BE(aclsBuffers.length, data.length - aclslen - 8)
 		var x = data.length - aclslen - 4
 		for (var i = 0; i < aclsBuffers.length; i++) {

@@ -1,7 +1,10 @@
 module.exports = function (logger, inherits, Request, Response, ACL) {
 
 	function Create(path, data, acls, flags, xid) {
-		Request.call(this, 1, xid, CreateResponse)
+		Request.call(this, Request.types.CREATE, xid, CreateResponse)
+		if(!Buffer.isBuffer(data)) {
+			data = new Buffer(data.toString())
+		}
 		this.path = path
 		this.data = data
 		this.acls = acls || ACL.OPEN
@@ -24,13 +27,11 @@ module.exports = function (logger, inherits, Request, Response, ACL) {
 			}
 		)
 		var aclslen = aclsBuffers.reduce(function (total, acl) { return total + acl.length }, 0)
-		var data = new Buffer(4 + 4 + 4 + pathlen + 4 + this.data.length + 4 + aclslen + 4)
-		data.writeInt32BE(this.xid, 0)
-		data.writeInt32BE(this.type, 4)
-		data.writeInt32BE(pathlen, 8)
-		data.write(this.path, 12)
-		data.writeInt32BE(this.data.length, 12 + pathlen)
-		this.data.copy(data, 16 + pathlen)
+		var data = new Buffer(4 + pathlen + 4 + this.data.length + 4 + aclslen + 4)
+		data.writeInt32BE(pathlen, 0)
+		data.write(this.path, 4)
+		data.writeInt32BE(this.data.length, 4 + pathlen)
+		this.data.copy(data, 8 + pathlen)
 		data.writeInt32BE(aclsBuffers.length, data.length - aclslen - 8)
 		var x = data.length - aclslen - 4
 		for (var i = 0; i < aclsBuffers.length; i++) {

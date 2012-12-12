@@ -1,7 +1,7 @@
 module.exports = function (inherits, Request, Response) {
 
 	function Auth(authType, id) {
-		Request.call(this, 100, -4, AuthResponse)
+		Request.call(this, Request.types.AUTH, -4, AuthResponse)
 		this.authType = authType
 		this.id = id
 	}
@@ -10,10 +10,8 @@ module.exports = function (inherits, Request, Response) {
 	Auth.prototype.toBuffer = function () {
 		var idData = this.id.toBuffer()
 		var data = new Buffer(4 + 4 + 4 + idData.length)
-		data.writeInt32BE(this.xid, 0)
-		data.writeInt32BE(this.type, 4)
-		data.writeInt32BE(this.authType, 8)
-		idData.copy(data, 12)
+		data.writeInt32BE(this.authType, 0)
+		idData.copy(data, 4)
 		return data
 	}
 
