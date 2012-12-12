@@ -390,7 +390,6 @@ module.exports = function (
 		this.readOnly = this.options.readOnly
 	}
 
-
 	Session.prototype.sendCredentials = function (cb) {
 		this._chain(
 			this.credentials.map(

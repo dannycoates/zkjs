@@ -1,4 +1,4 @@
-module.exports = function (logger, inherits, Request, Response, CheckVersion, Create, Delete, SetData, ZNodeStat, defaults) {
+module.exports = function (logger, assert, inherits, Request, Response, CheckVersion, Create, Delete, SetData, ZNodeStat, ZKErrors, defaults) {
 
 	function Transaction(session) {
 		Request.call(this, Request.types.TRANSACTION, session.xid++, TransactionResponse)
@@ -8,7 +8,24 @@ module.exports = function (logger, inherits, Request, Response, CheckVersion, Cr
 	inherits(Transaction, Request)
 
 	Transaction.prototype.create = function (path, data, flags, acls) {
-		//TODO parameter shenanigans
+		assert(typeof(path) === 'string', 'path is required')
+		assert(data !== undefined, 'data is required')
+
+		if (acls === undefined) {
+			if (flags === undefined) {
+				// path, data
+				acls = null
+				flags = Create.flags.NONE
+			}
+			else if (Array.isArray(flags)) {
+				// path, data, acls
+				flags = Create.flags.NONE
+			}
+			else {
+				// path, data, flags
+				acls = null
+			}
+		}
 		this.ops.push(
 			new Create(
 				this.session._chroot(path),
@@ -21,6 +38,9 @@ module.exports = function (logger, inherits, Request, Response, CheckVersion, Cr
 	}
 
 	Transaction.prototype.del = function (path, version) {
+		assert(typeof(path) === 'string', 'path is required')
+		assert(typeof(version) === 'number', 'version is required')
+
 		this.ops.push(
 			new Delete(
 				this.session._chroot(path),
@@ -31,6 +51,10 @@ module.exports = function (logger, inherits, Request, Response, CheckVersion, Cr
 	}
 
 	Transaction.prototype.set = function (path, data, version) {
+		assert(typeof(path) === 'string', 'path is required')
+		assert(data !== undefined, 'data is required')
+		assert(typeof(version) === 'number', 'version is required')
+
 		this.ops.push(
 			new SetData(
 				this.session._chroot(path),
@@ -42,6 +66,9 @@ module.exports = function (logger, inherits, Request, Response, CheckVersion, Cr
 	}
 
 	Transaction.prototype.check = function (path, version) {
+		assert(typeof(path) === 'string', 'path is required')
+		assert(typeof(version) === 'number', 'version is required')
+
 		this.ops.push(
 			new CheckVersion(
 				this.session._chroot(path),
@@ -95,15 +122,13 @@ module.exports = function (logger, inherits, Request, Response, CheckVersion, Cr
 			return this.cb(errno)
 		}
 		var results = []
-		var done = false
-		var type = 0
-		var err = 0
 		var x = 0
-		while (!done) {
-			type = buffer.readInt32BE(x)
-			done = buffer.readUInt8(x += 4) > 0
-			err = buffer.readInt32BE(x += 1)
-			logger.info(type, done, x, buffer.length)
+		do {
+			var type = buffer.readInt32BE(x)
+			var done = buffer.readUInt8(x += 4) > 0
+			var err = buffer.readInt32BE(x += 1)
+			if (done) break;
+
 			switch (type) {
 				case Request.types.CREATE:
 					var len = buffer.readInt32BE(x += 4)
@@ -118,12 +143,12 @@ module.exports = function (logger, inherits, Request, Response, CheckVersion, Cr
 					results.push(true)
 					break;
 				case -1: //error
-					//var e = buffer.readInt32BE(x += 4)
+					var e = buffer.readInt32BE(x += 4) || ZKErrors.ROLLEDBACK
 					results.push(err)
 					break;
 			}
-		}
-		this.cb(null, results)
+		} while (!done)
+		this.cb(e, results)
 	}
 
 	return Transaction

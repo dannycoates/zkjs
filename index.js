@@ -42,7 +42,7 @@ module.exports = function (options) {
 	var protocol = {
 		Auth: require('./protocol/auth')(inherits, Request, Response),
 		Close: require('./protocol/close')(inherits, Request, Response),
-		CheckVersion: require('./protocol/check-version')(logger),
+		CheckVersion: require('./protocol/check-version')(logger, Request),
 		Connect: require('./protocol/connect')(logger, inherits, Response, ZKErrors),
 		Create: require('./protocol/create')(logger, inherits, Request, Response, ACL),
 		Delete: require('./protocol/delete')(logger, inherits, Request, Response),
@@ -58,7 +58,7 @@ module.exports = function (options) {
 
 	var defaults = require('./default-callbacks')(logger, ZKErrors)
 
-	protocol.Transaction = require('./protocol/transaction')(logger, inherits, Request, Response, protocol.CheckVersion, protocol.Create, protocol.Delete, protocol.SetData, ZnodeStat, defaults)
+	protocol.Transaction = require('./protocol/transaction')(logger, assert, inherits, Request, Response, protocol.CheckVersion, protocol.Create, protocol.Delete, protocol.SetData, ZnodeStat, ZKErrors, defaults)
 
 
 	var Ping = require('./protocol/ping')(inherits, Request)

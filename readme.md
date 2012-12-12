@@ -106,7 +106,7 @@ __Arguments__
 * data - the value to set
 * flags - _optional_ `ZK.create` flags
 * acls - _optional_ array of ACL objects
-* callback(err, path) - returns an Error or the path that was created
+* callback(errno, path) - returns an errno or the path that was created
 
 __Flags__
 
@@ -134,7 +134,7 @@ __Arguments__
 
 * path - path of the node
 * watch(info) - _optional_ register a function that will be called if this path changes
-* callback(err, exists, zstat) - returns an Error or boolean and stat info
+* callback(errno, exists, zstat) - returns an errno or boolean and stat info
 
 ### zk.get(path, [watch], callback)
 
@@ -144,7 +144,7 @@ __Arguments__
 
 * path - path of the node
 * watch(info) - _optional_ register a function that will be called if this path changes
-* callback(err, data, zstat) - returns an Error or data and stat info
+* callback(errno, data, zstat) - returns an errno or data and stat info
 
 ### zk.getACL(path, callback)
 
@@ -153,7 +153,7 @@ Get ACL information of a node
 __Arguments__
 
 * path - path of the node
-* callback(err, acls, zstat) - returns an Error or an array of ACLs and stat info
+* callback(errno, acls, zstat) - returns an errno or an array of ACLs and stat info
 
 ### zk.getChildren(path, [watch], callback)
 
@@ -163,7 +163,7 @@ __Arguments__
 
 * path - path of the node
 * watch(info) - _optional_ register a function that will be called if this path's children
-* callback(err, children, zstat) - returns an Error or an array of child names and stat info
+* callback(errno, children, zstat) - returns an errno or an array of child names and stat info
 
 ### zk.mkdirp(path, callback)
 
@@ -172,7 +172,7 @@ Create a path of nodes
 __Arguments__
 
 * path - the path to create
-* callback(err) - returns an Error if the path wasn't created
+* callback(err) - returns an errno if the path wasn't created
 
 ### zk.set(path, data, version, callback)
 
@@ -183,7 +183,7 @@ __Arguments__
 * path - path of the node
 * data - data to set
 * version - most recent version number of the node
-* callback(err, zstat) - returns an Error or stat info
+* callback(errno, zstat) - returns an errno or stat info
 
 ### zk.setACL(path, acls, version, callback)
 
@@ -194,7 +194,7 @@ __Arguments__
 * path - path of the node
 * acls - array of ACLs to set
 * version - the latest ACL version number of the node
-* callback(err, zstat) - returns an Error or stat info
+* callback(errno, zstat) - returns an errno or stat info
 
 ### zk.sync(path, callback)
 
@@ -203,11 +203,15 @@ Sync the node with the leader
 __Arguments__
 
 * path - path of the node
-* callback(err, path) - returns an Error or the path
+* callback(errno, path) - returns an errno or the path
 
 ### zk.toString()
 
 A string value of the session. For debugging.
+
+### zk.transaction()
+
+Begin a ZooKeeper transaction. See [Transactions](#Transactions)
 
 ### Events
 
@@ -293,6 +297,52 @@ Retry for `timespan` milliseconds, `wait` milliseconds between requests.
 
 Retry n `times`, increasing delay between tries exponentially starting at `wait`
 milliseconds, optionally bounded by `maxWait` milliseconds.
+
+---
+
+## Transactions
+
+```js
+zk.transaction()
+  .check('/foo', 4)
+  .create('/foo/bar', 'bubbles')
+  .set('/baz', 'buzz', 0)
+  .del('/cuz', 0)
+  .commit(
+    function (errno, results) {
+      if (!err) {
+        results.forEach(console.log.bind(this, 'op result'))
+      }
+    }
+  )
+```
+
+Transactions execute all or none of the member operations atomically. Create a
+`Transaction` with `zk.transaction()` and execute the transaction with `commit`.
+
+Operations are added to the transaction with the following functions and may be chained.
+
+### tx.create(path, data, [flags], [acls])
+
+Create a node
+
+### tx.del(path, version)
+
+Delete a node
+
+### tx.set(path, data, version)
+
+Set the value of a node
+
+### tx.check(path, version)
+
+Assert that the given `version` is the latest for `path`
+
+### tx.commit(callback)
+
+Execute the transaction.
+
+* callback(errno, results) - returns an errno or an array of results
 
 ---
 

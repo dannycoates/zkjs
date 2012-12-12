@@ -1,7 +1,7 @@
-module.exports = function (logger) {
+module.exports = function (logger, Request) {
 
 	function CheckVersion(path, version) {
-		this.type = 13
+		this.type = Request.types.CHECKVERSION
 		this.path = path
 		this.version = version
 	}
