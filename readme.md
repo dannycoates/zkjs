@@ -211,7 +211,7 @@ A string value of the session. For debugging.
 
 ### zk.transaction()
 
-Begin a ZooKeeper transaction. See [Transactions](#Transactions)
+Begin a ZooKeeper transaction. See [Transactions](#transactions)
 
 ### Events
 

@@ -35,7 +35,7 @@ module.exports = function (
 	inherits(Ensemble, EventEmitter)
 
 	Ensemble.prototype.connect = function () {
-		if (!this.session) {
+		if (!this.session || this.session.closed) {
 			return
 		}
 		this.current = (this.current + 1) % this.session.hosts.length
@@ -166,9 +166,7 @@ module.exports = function (
 		this.connected = false
 		this.emit('disconnected')
 		clearTimeout(this.reconnectTimer)
-		if (!this.session.closed) {
-			this._reconnect()
-		}
+		this._reconnect()
 	}
 
 	return Ensemble
