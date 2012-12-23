@@ -1,10 +1,10 @@
 {
   "name": "zkjs",
-  "version": "3.4.0beta3",
+  "version": "3.4.0beta4",
   "description": "Pure JS Zookeeper Client",
   "main": "index.js",
   "dependencies": {
-    "readable-stream": "*",
+    "readable-stream": "git://github.com/dannycoates/readable-stream.git#e7482f16",
     "int53": "*"
   },
   "repository": {

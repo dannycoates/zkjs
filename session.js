@@ -363,8 +363,8 @@ module.exports = function (
 	}
 
 	Session.prototype._unchroot = function (path) {
-		if (!path) {
-			return null
+		if (!path || this.root.length < 2) {
+			return path
 		}
 		return path.substr(this.root.length) || '/'
 	}
