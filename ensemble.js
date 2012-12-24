@@ -49,6 +49,7 @@ module.exports = function (
 		this.client.on('zxid', this.onClientZxid)
 		this.client.on('watch', this.onClientWatch)
 		logger.info('connecting', addressPort)
+		this.client.setKeepAlive(true, 1000 * 60 * 5)
 		this.client.connect(+(addressPort[1]), addressPort[0])
 	}
 
