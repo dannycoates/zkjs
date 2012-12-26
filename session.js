@@ -98,6 +98,7 @@ module.exports = function (
 	}
 
 	Session.prototype.close = function () {
+		this.watcher.reset()
 		this._send(protocol.Close.instance, retry.no(), this.onClose)
 	}
 
