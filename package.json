@@ -1,6 +1,6 @@
 {
   "name": "zkjs",
-  "version": "3.4.0beta4",
+  "version": "3.4.0beta5",
   "description": "Pure JS Zookeeper Client",
   "main": "index.js",
   "dependencies": {
