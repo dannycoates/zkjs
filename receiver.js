@@ -43,7 +43,6 @@ module.exports = function (logger, inherits, EventEmitter, State, Watch) {
 	}
 
 	function Receiver(stream) {
-		var self = this
 		this.stream = stream
 		this.onStreamReadable = streamReadable.bind(this)
 		this.onStreamEnd = streamEnd.bind(this)
@@ -56,6 +55,7 @@ module.exports = function (logger, inherits, EventEmitter, State, Watch) {
 		this.state = new HeaderLength(Body)
 		this.queue = []
 		this.closed = false
+		this.read()
 		EventEmitter.call(this)
 	}
 	inherits(Receiver, EventEmitter)

@@ -4,7 +4,7 @@
   "description": "Pure JS Zookeeper Client",
   "main": "index.js",
   "dependencies": {
-    "readable-stream": "git://github.com/dannycoates/readable-stream.git#e7482f16",
+    "readable-stream": ">=0.2.0",
     "int53": "*"
   },
   "repository": {
