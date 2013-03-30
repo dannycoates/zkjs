@@ -1,4 +1,11 @@
-module.exports = function (logger, inherits, Request, Response, ACL) {
+var createFlags = {
+	NONE: 0,
+	EPHEMERAL: 1,
+	SEQUENCE: 2,
+	EPHEMERAL_SEQUENCE: 3
+}
+
+function CreateModule(logger, inherits, Request, Response, ACL) {
 
 	function Create(path, data, acls, flags, xid) {
 		Request.call(this, Request.types.CREATE, xid, CreateResponse)
@@ -12,12 +19,7 @@ module.exports = function (logger, inherits, Request, Response, ACL) {
 	}
 	inherits(Create, Request)
 
-	Create.flags = {
-		NONE: 0,
-		EPHEMERAL: 1,
-		SEQUENCE: 2,
-		EPHEMERAL_SEQUENCE: 3
-	}
+	Create.flags = createFlags
 
 	Create.prototype.toBuffer = function () {
 		var pathlen = Buffer.byteLength(this.path)
@@ -59,3 +61,6 @@ module.exports = function (logger, inherits, Request, Response, ACL) {
 
 	return Create
 }
+CreateModule.flags = createFlags
+
+module.exports = CreateModule

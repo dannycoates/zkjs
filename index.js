@@ -8,6 +8,14 @@ var path = require('path')
 var ReadableStream = require('readable-stream')
 var int53 = require('int53')
 
+var State = require('./state')(inherits)
+var ZKErrors = require('./protocol/zk-errors')()
+var ACL = require('./acl')(format, crypto)
+var ZnodeStat = require('./protocol/znode-stat')(format, int53)
+var retry = require('./retry')
+var RequestBuffer = require('./request-buffer')()
+var createModule = require('./protocol/create')
+
 var noop = function () {}
 var nullLogger = {}
 Object.keys(console).forEach(function (f) { nullLogger[f] = noop })
@@ -30,12 +38,9 @@ function setLogger(logger) {
 	}
 }
 
-module.exports = function (options) {
+function ZK(options) {
+	options = options || {}
 	var logger = setLogger(options.logger)
-	var State = require('./state')(inherits)
-	var ZKErrors = require('./protocol/zk-errors')()
-	var ACL = require('./acl')(format, crypto)
-	var ZnodeStat = require('./protocol/znode-stat')(format, int53)
 	var Request = require('./protocol/request')(logger)
 	var Response = require('./protocol/response')(logger, ZKErrors)
 
@@ -44,7 +49,7 @@ module.exports = function (options) {
 		Close: require('./protocol/close')(inherits, Request, Response),
 		CheckVersion: require('./protocol/check-version')(logger, Request),
 		Connect: require('./protocol/connect')(logger, inherits, Response, ZKErrors),
-		Create: require('./protocol/create')(logger, inherits, Request, Response, ACL),
+		Create: createModule(logger, inherits, Request, Response, ACL),
 		Delete: require('./protocol/delete')(logger, inherits, Request, Response),
 		Exists: require('./protocol/exists')(logger, inherits, Request, Response, ZKErrors, ZnodeStat),
 		GetACL: require('./protocol/get-acl')(logger, inherits, Request, Response, ZnodeStat, ACL),
@@ -63,12 +68,8 @@ module.exports = function (options) {
 
 	var Ping = require('./protocol/ping')(inherits, Request)
 	var Watch = require('./protocol/watch')(format)
-
 	var Receiver = require('./receiver')(logger, inherits, EventEmitter, State, Watch)
-	var RequestBuffer = require('./request-buffer')()
 	var Watcher = require('./watcher')(logger, Watch)
-
-	var retry = require('./retry')
 
 	var Client = require('./client')(
 		logger,
@@ -107,3 +108,10 @@ module.exports = function (options) {
 
 	return new Session(options)
 }
+
+ZK.errors = ZKErrors
+ZK.ACL = ACL
+ZK.retry = retry
+ZK.create = createModule.flags
+
+module.exports = ZK
