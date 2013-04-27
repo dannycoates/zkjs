@@ -8,8 +8,14 @@ module.exports = function (
 ) {
 
 	function Client() {
-		this.input = new ReadableStream()
-		this.input.wrap(this)
+		net.Socket.call(this)
+
+		this.input = this;
+		if (!this.input.read) {
+			this.input = new ReadableStream()
+			this.input.wrap(this)
+		}
+		
 		this.receiver = new Receiver(this.input)
 
 		this.onPing = receiverPing.bind(this)
@@ -21,8 +27,6 @@ module.exports = function (
 		this.receiver.on('zxid', this.onZxid)
 		this.receiver.on('watch', this.onWatch)
 		this.receiver.on('end', this.onReceiverEnd)
-
-		net.Socket.call(this)
 	}
 	inherits(Client, net.Socket)
 
