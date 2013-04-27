@@ -357,10 +357,10 @@ module.exports = function (
 
 	Session.prototype._chroot = function (path) {
 		if (path.charAt(0) !== '/') {
-			path = (this.root + '/' + path).replace(/^\/\//, '/');
+			path = (this.root + '/' + path).replace(/^\/\//, '/')
 		}
 		if (path.length > 1 && path[path.length - 1] === '/') {
-			path = path.substring(0, path.length - 1);
+			path = path.substring(0, path.length - 1)
 		}
 		return path
 	}
