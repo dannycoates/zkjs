@@ -1,4 +1,4 @@
-# zkjs
+# zkjs [![Build Status](https://travis-ci.org/dannycoates/zkjs.png?branch=master)](https://travis-ci.org/dannycoates/zkjs)
 
 A js node client for [ZooKeeper](http://zookeeper.apache.org/)
 
