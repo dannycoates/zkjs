@@ -124,7 +124,7 @@ Delete a node
 __Arguments__
 
 * path - path of the node
-* version - the version of the node
+* version - the version of the node (-1 for any version)
 
 ### zk.exists(path, [watch], callback)
 
@@ -182,7 +182,7 @@ __Arguments__
 
 * path - path of the node
 * data - data to set
-* version - most recent version number of the node
+* version - most recent version number of the node (-1 for any version)
 * callback(errno, zstat) - returns an errno or stat info
 
 ### zk.setACL(path, acls, version, callback)
